@@ -50,7 +50,7 @@ mc = Multicorn()
 
 
 @mc.register #FIXME
-@declare(Alchemy, identity_properties=("id",), url="sqlite:///")
+@declare(Alchemy, identity_properties=("id",), url="sqlite:///pastabin.db")
 class Person(object): #FIXME RawPerson
     id = Property(type=int)
     login = Property(type=unicode)
@@ -59,7 +59,7 @@ class Person(object): #FIXME RawPerson
 
 
 @mc.register #FIXME
-@declare(Alchemy, identity_properties=("id",), url="sqlite:///")
+@declare(Alchemy, identity_properties=("id",), url="sqlite:///pastabin.db")
 class Snippet(object): #FIXME RawSnippet
     id = Property(type=int)
     person_id = Property(type=int)
@@ -76,43 +76,18 @@ class Snippet(object): #FIXME RawSnippet
 #Snippet.register("person", Person.all.filter(c(-1).person_id == c.id))
 
 
-Person.create({ #FIXME
-    'login': "Kikoo",
-    'password': "azertyuiop",
-    'email': "kikoo@lol.com",
-    }).save()
-
-Person.create({ #FIXME
-    'login': "Foobar",
-    'password': ":p",
-    'email': "foo@bar.com",
-    }).save()
-
-Snippet.create({ #FIXME
-    'person_id': 2,
-    'date': datetime(1942, 7, 14),
-    'language': "python",
-    'title': "hello.py",
-    'text': "#!/usr/bin/python\n\nprint('Hello World!')\n",
-    }).save()
-
-
 if __name__ == "__main__":
-    print(" | %4s | %-15s | %-15s | %-25s | " % ("id", "login", "password", "email"))
-    for item in Person.all.execute():
-        print(" | %4i | %-15s | %-15s | %-25s | " % (item['id'], item['login'], item['password'], item['email']))
+    Person.create({
+        'login': "Totoro",
+        'password': "azerty",
+        'email': "totoro@gibli.com",
+        }).save()
+    Snippet.create({
+        'person_id': 1,
+        'date': datetime(1988, 1, 1),
+        'language': "assembly",
+        'title': "hello.asm",
+        'text': "org 100h\n\nmov ah, 09h\nmov dx, offset msg\nint 21h\n\nmov ah, 4Ch\nint 21h\n\nmsg db \"Groaaah!\"",
+        }).save()
 
-    print("\n\n")
 
-    print(" | %4s | %-15s | %-15s | %-15s | %-15s | " % ("id", "person_id.login", "language", "title", "date"))
-    for item in Snippet.all.execute():
-        #print(" | %4i | %-15s | %-15s | %-15s | %-15s | " % (item['id'], item['person']['login'], item['language'], item['title'], str(item['date'])))
-        print(" | %4i | %-15i | %-15s | %-15s | %-15s | " % (item['id'], item['person_id'], item['language'], item['title'], str(item['date'])))
-
-items = Snippet.all.filter(c.id == 1).execute()
-print len(list(items))
-try:
-    item = Snippet.all.filter(c.id == 1).one(None).execute()
-except:
-    import pdb
-    pdb.post_mortem()

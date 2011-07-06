@@ -87,7 +87,6 @@ def get_snippet_by_id(snippet_id):
         return "ERREUR ouaaaaah",404
 
 
-
 @app.route('/connect', methods=['POST',])
 def connect():
     item = Person.all.filter(
@@ -105,15 +104,18 @@ def connect():
         flash("Invalid login or password !")
         return redirect(url_for("connect"))
 
+
 @app.route('/connect', methods=('GET',))
 def get_connect():
     return render_template('connect.html.jinja2')
+
 
 @app.route('/disconnect')
 def disconnect():
     session.pop('logged_in', None)
     flash('You are disconnected !')
     return redirect("/") #FIXME
+
 
 @app.route("/modify/<int:id>", methods=("GET", "POST"))
 def modify_snippet(id):
@@ -129,10 +131,7 @@ def modify_snippet(id):
             item.save()
         return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
     else:
-        try:
-            item = Snippet.all.filter(c.id == id).one(None).execute()
-        except:
-            return "Ouch"
+        item = Snippet.all.filter(c.id == id).one(None).execute()
         if item is not None:
             return render_template(
                     "modify.html.jinja2",
@@ -142,7 +141,7 @@ def modify_snippet(id):
                     snip_text=item['text'],
                     )
         else:
-            return "None" #FIXME
+            return "Groaaah!",404
 
 @app.route('/register', methods=('POST',))
 def register():
