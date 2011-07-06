@@ -1,0 +1,18 @@
+{% extends "_layout.jinja2" %}
+{% block connect %}
+
+{%- if connect %} 
+
+{% else %}
+  <h2>Login</h2>
+  <form action="{{ url_for('connect') }}" method=post>
+    <dl>
+      <dt>Login:
+      <dd><input type=text name=username>
+      <dt>Password:
+      <dd><input type=password name=password>
+      <dd><input type=submit value=Login>
+    </dl>
+  </form>
+{% endif -%}
+{% endblock connect %}
