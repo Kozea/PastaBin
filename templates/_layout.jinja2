@@ -5,6 +5,10 @@
   <meta content="text/html; charset=utf-8" http-equiv="content-type" />
   <title>{{ name }}</title>
   <link href="{{ url_for('stylesheet') }}" media="screen" type="text/css" rel="stylesheet" />
+  <link href="{{ url_for('static_file', folder='img', path='img/icon.png') }}" type="image/png" rel="shortcut icon" />
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
 </head>
 
 <body>
