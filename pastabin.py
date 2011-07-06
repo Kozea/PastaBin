@@ -43,7 +43,13 @@ from access_points import *
 
 
 app = Flask(__name__)
+g.user_id = None
+g.user_login = "Guest"
+g.user_password = None
+g.email = None
 
+# set the secret key.  keep this really secret:
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 @app.route("/add", methods=("GET", "POST"))
 def add_snippet():
@@ -53,7 +59,17 @@ def add_snippet():
         return render_template("add.html.jinja2")
 
 
+@app.route('/connect', methods=['GET', 'POST'])
+def connect():
+    if request.method == "POST":
+        if request.form['login'] == "toto" and request.form['password'] == "azerty" :
+            return "COOL"
+        else: 
+            return "ECHEC"
+    else:
+        return render_template("connect.html.jinja2")
+
+
 if __name__ == '__main__':
     app.run(debug=True)
-
 
