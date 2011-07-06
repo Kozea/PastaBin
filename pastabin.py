@@ -70,35 +70,38 @@ def add_snippet():
     else:
         return render_template("add.html.jinja2")
 
-
-@app.route("/")
+@app.route("/", methods=("GET",))
 def index():
     data =  {"snippets" : Snippet.all.execute()}
     return render_template("index.html.jinja2", **data)
 
-
-@app.route("/snippet/<int:snippet_id>")
+@app.route("/snippet/<int:snippet_id>", methods=("GET",))
 def get_snippet_by_id(snippet_id):
     item = Snippet.all.filter(
         c.id == snippet_id).one().execute()
     data = {"snippet" : item}
     return render_template("snippet.html.jinja2", **data)
 
-@app.route('/connect', methods=['GET', 'POST'])
+@app.route('/connect', methods=['POST',])
 def connect():
-    if request.method == 'POST':
-        item = Person.all.filter(
-            c.login == request.form['login']).one(None)
-        item = item.execute()
-        if item['password'] == request.form['password']:
-            session['logged_in'] = True
-            flash("You are connected !")
-            return redirect("/") #FIXME
-        else:
-            flash("Invalid login or password !")
+    item = Person.all.filter(
+        c.login == request.form['login']).one(None)
+    item = item.execute()
+    if '' == request.form.get('login', '') \
+        or '' == request.form.get('password', ''):
+            flash("Empty field !")
             return redirect(url_for("connect"))
+    if item['password'] == request.form['password']:
+        session['logged_in'] = True
+        flash("You are connected !")
+        return redirect("/") #FIXME
     else:
-        return render_template('connect.html.jinja2')
+        flash("Invalid login or password !")
+        return redirect(url_for("connect"))
+
+@app.route('/connect', methods=('GET',))
+def get_connect():
+    return render_template('connect.html.jinja2')
 
 @app.route('/disconnect')
 def disconnect():
@@ -134,6 +137,19 @@ def modify_snippet(id):
                     )
         else:
             return "None" #FIXME
+
+@app.route('/register', methods=('POST',))
+def register():
+    if '' == request.form.get('login', '') \
+        or '' == request.form.get('password', '') \
+        or '' == request.form.get('email', '') :
+        return 'BAD'
+    else:
+        return 'REGISTER'
+
+@app.route('/register', methods=('GET',))
+def get_register():
+    return render_template('register.html.jinja2')
 
 if __name__ == '__main__':
     app.run()
