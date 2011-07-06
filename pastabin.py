@@ -83,7 +83,7 @@ def get_snippet_by_id(snippet_id):
     if item is not None:
         data = {"snippet" : item}
         return render_template("snippet.html.jinja2", **data)
-    else
+    else:
         return "ERREUR ouaaaaah",404
 
 
@@ -155,7 +155,7 @@ def register():
             'password': request.form['password'], 
             'email': request.form['email'],
             }).save()
-        return redirect 'REGISTER'
+        return 'REGISTER'
 
 @app.route('/register', methods=('GET',))
 def get_register():
@@ -165,6 +165,6 @@ def get_register():
 
 
 if __name__ == '__main__':
-    app.run()
-#    app.run(debug=True)
+#    app.run()
+    app.run(debug=True)
 
