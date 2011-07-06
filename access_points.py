@@ -109,5 +109,10 @@ if __name__ == "__main__":
         #print(" | %4i | %-15s | %-15s | %-15s | %-15s | " % (item['id'], item['person']['login'], item['language'], item['title'], str(item['date'])))
         print(" | %4i | %-15i | %-15s | %-15s | %-15s | " % (item['id'], item['person_id'], item['language'], item['title'], str(item['date'])))
 
-
-
+items = Snippet.all.filter(c.id == 1).execute()
+print len(list(items))
+try:
+    item = Snippet.all.filter(c.id == 1).one(None).execute()
+except:
+    import pdb
+    pdb.post_mortem()

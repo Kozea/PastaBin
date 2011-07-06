@@ -41,6 +41,8 @@ from datetime import datetime
 
 from flask import *
 from multicorn.declarative import declare, Property
+from multicorn.requests import CONTEXT as c
+
 from access_points import *
 
 
@@ -56,13 +58,42 @@ def add_snippet():
             'language': request.form['snip_language'],
             'title': request.form['snip_title'],
             'text': request.form['snip_text'],
-            })
+            }).save()
         return redirect("/s/IDontKnow") #FIXME
     else:
         return render_template("add.html.jinja2")
 
 
+@app.route("/modify/<int:id>", methods=("GET", "POST"))
+def modify_snippet(id):
+    if request.method == "POST":
+        item = Snippet.all.filter(c.id == id).one(None).execute()
+        if item is not None:
+            item['date'] = datetime.now()
+            item['language'] = request.form['snip_language']
+            item['title'] = request.form['snip_title']
+            item['text'] = request.form['snip_text']
+            item.save()
+        return redirect("/") #FIXME
+    else:
+        try:
+            item = Snippet.all.filter(c.id == id).one(None).execute()
+        except:
+            return "Ouch"
+        if item is not None:
+            return render_template(
+                    "modify.html.jinja2",
+                    snip_id=item['id'],
+                    snip_title=item['title'],
+                    snip_language=item['language'],
+                    snip_text=item['text'],
+                    )
+        else:
+            return "None" #FIXME
+
+
 if __name__ == '__main__':
     app.run()
+#    app.run(debug=True)
 
 
