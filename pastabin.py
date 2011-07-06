@@ -145,6 +145,11 @@ def register():
         or '' == request.form.get('email', '') :
         return 'BAD'
     else:
+        Person.create({
+            'login': request.form['login'], 
+            'password': request.form['password'], 
+            'email': request.form['email'],
+            }).save()
         return 'REGISTER'
 
 @app.route('/register', methods=('GET',))
