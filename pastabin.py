@@ -36,11 +36,24 @@
 ##                                                                         ##
 ###########################################################################
 
+
+from flask import *
 from multicorn.declarative import declare, Property
-from corns import Person, Snippet
+from access_points import *
+
+
+app = Flask(__name__)
+
+
+@app.route("/add", methods=("GET", "POST"))
+def add_snippet():
+    if request.method == "POST":
+        return "POST"
+    else:
+        return render_template("add.html.jinja2")
 
 
 if __name__ == '__main__':
-    run()
+    app.run(debug=True)
 
 
