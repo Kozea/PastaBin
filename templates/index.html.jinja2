@@ -1,5 +1,12 @@
-{% extends "_layout.jinja2" %}
-
+{# {% extends "_layout.jinja2" %} #}
 {% block content %}
+<h4>Les plus récents</h4>
+<ul class="index">
+{% for item in snippets %}
+  <li>
+    <a href="{{url_for("get_snippet_by_id", snippet_id = item.id)}}">{{ item.title }}</a>
+  </li>
+{% endfor %}
+</ul>
 
 {% endblock content %}

@@ -44,10 +44,17 @@ from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
 
 from access_points import *
+from multicorn.requests import CONTEXT as c
 
 
 app = Flask(__name__)
+#g.user_id = None
+#g.user_login = "Guest"
+#g.user_password = None
+#g.email = None
 
+# set the secret key.  keep this really secret:
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 @app.route("/add", methods=("GET", "POST"))
 def add_snippet():
@@ -62,6 +69,37 @@ def add_snippet():
         return redirect("/s/IDontKnow") #FIXME
     else:
         return render_template("add.html.jinja2")
+
+@app.route("/")
+def index():
+    data =  {"snippets" : Snippet.all.execute()}
+    return render_template("index.html.jinja2", **data)
+
+@app.route("/snippet/<int:snippet_id>")
+def get_snippet_by_id(snippet_id):
+    item = Snippet.all.filter(
+        c.id == snippet_id).one().execute()
+    data = {"snippet" : item}
+    return render_template("snippet.html.jinja2", **data)
+
+
+
+@app.route('/connect', methods=['GET', 'POST'])
+def connect():
+    if request.method == 'POST':
+        #import pdb
+        #pdb.set_trace()
+        item = Person.all.filter(
+            c.login == request.form['login']).one(None)
+        item = item.execute()
+        if item['password'] == request.form['password']:
+            flash("You are connected !")
+            return redirect("/") #FIXME
+        else:
+            flash("Invalid login or password !")
+            return redirect(url_for("connect"))
+    else:
+        return render_template('connect.html.jinja2')
 
 
 @app.route("/modify/<int:id>", methods=("GET", "POST"))
@@ -95,5 +133,4 @@ def modify_snippet(id):
 if __name__ == '__main__':
     app.run()
 #    app.run(debug=True)
-
 
