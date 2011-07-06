@@ -84,6 +84,7 @@ def get_snippet_by_id(snippet_id):
     data = {"snippet" : item}
     return render_template("snippet.html.jinja2", **data)
 
+
 @app.route('/connect', methods=['GET', 'POST'])
 def connect():
     if request.method == 'POST':
@@ -100,11 +101,13 @@ def connect():
     else:
         return render_template('connect.html.jinja2')
 
+
 @app.route('/disconnect')
 def disconnect():
     session.pop('logged_in', None)
     flash('You are disconnected !')
     return redirect("/") #FIXME
+
 
 @app.route("/modify/<int:id>", methods=("GET", "POST"))
 def modify_snippet(id):
@@ -120,10 +123,7 @@ def modify_snippet(id):
             item.save()
         return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
     else:
-        try:
-            item = Snippet.all.filter(c.id == id).one(None).execute()
-        except:
-            return "Ouch"
+        item = Snippet.all.filter(c.id == id).one(None).execute()
         if item is not None:
             return render_template(
                     "modify.html.jinja2",
@@ -133,7 +133,7 @@ def modify_snippet(id):
                     snip_text=item['text'],
                     )
         else:
-            return "None" #FIXME
+            return "Groaaah!",404
 
 if __name__ == '__main__':
     app.run()
