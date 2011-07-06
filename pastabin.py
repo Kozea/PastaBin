@@ -86,7 +86,6 @@ def get_snippet_by_id(snippet_id):
 
 
 @app.route('/connect', methods=['POST',])
->>>>>>> a2b0497966cbd8ce857b18a05f2c2ab2068437b5
 def connect():
     item = Person.all.filter(
         c.login == request.form['login']).one(None)
