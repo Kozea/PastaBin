@@ -1,10 +1,8 @@
 {# {% extends "_layout.jinja2" %} #}
 {% block connect %}
-
 {% for message in get_flashed_messages() %}
     <div class=flash>{{ message }}</div>
 {% endfor %}
-
 {%- if connect %} 
   <h2>You are logged</h2>
 {% else %}

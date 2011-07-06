@@ -42,13 +42,14 @@ from datetime import datetime
 from flask import *
 from multicorn.declarative import declare, Property
 from access_points import *
+from multicorn.requests import CONTEXT as c
 
 
 app = Flask(__name__)
-g.user_id = None
-g.user_login = "Guest"
-g.user_password = None
-g.email = None
+#g.user_id = None
+#g.user_login = "Guest"
+#g.user_password = None
+#g.email = None
 
 # set the secret key.  keep this really secret:
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
@@ -70,13 +71,20 @@ def add_snippet():
 
 @app.route('/connect', methods=['GET', 'POST'])
 def connect():
-    if request.method == "POST":
-        if request.form['login'] == "toto" and request.form['password'] == "azerty" :
-            return "COOL"
-        else: 
-            return "ECHEC"
+    if request.method == 'POST':
+        #import pdb
+        #pdb.set_trace()
+        item = Person.all.filter(
+            c.login == request.form['login']).one(None)
+        item = item.execute()
+        if item['password'] == request.form['password']:
+            flash("You are connected !")
+            return redirect("/") #FIXME
+        else:
+            flash("Invalid login or password !")
+            return redirect(url_for("connect"))
     else:
-        return render_template("connect.html.jinja2")
+        return render_template('connect.html.jinja2')
 
 
 if __name__ == '__main__':
