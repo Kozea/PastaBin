@@ -3,7 +3,7 @@
 
 <head>
   <meta content="text/html; charset=utf-8" http-equiv="content-type" />
-  <title>{{ name }}</title>
+  <title>{{ page_title }} - PastaBin</title>
   <link href="{{ url_for('stylesheet') }}" media="screen" type="text/css" rel="stylesheet" />
   <link href="{{ url_for('static_file', folder='img', path='img/icon.png') }}" type="image/png" rel="shortcut icon" />
   <!--[if lt IE 9]>
@@ -13,7 +13,10 @@
 
 <body>
   <header>
-    <h1><a href="/">{{ name }}</a></h1>
+    <h1><a href="/">PastaBin</a></h1>
+
+    {% block connect %}
+    {% endblock connect %}
   </header>
 
   <nav>
