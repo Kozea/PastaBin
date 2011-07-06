@@ -1,0 +1,10 @@
+{# {% extends "_layout.jinja2" %} #}
+{% block connect %}
+{% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+{% endfor %}
+ 
+<h2>Account</h2>
+
+
+{% endblock connect %}

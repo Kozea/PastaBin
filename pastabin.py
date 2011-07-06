@@ -87,7 +87,7 @@ def get_snippet_by_id(snippet_id):
 @app.route('/connect', methods=['POST',])
 def connect():
     item = Person.all.filter(
-        c.login == request.form['login']).one(None)
+        c.login.lower() == request.form['login'].lower()).one(None)
     item = item.execute()
     if '' == request.form.get('login', '') \
         or '' == request.form.get('password', ''):
@@ -145,14 +145,17 @@ def register():
     if '' == request.form.get('login', '') \
         or '' == request.form.get('password', '') \
         or '' == request.form.get('email', '') :
-        return 'BAD'
+        flash("Empty field")
+        return redirect(url_for("register"))
     else:
         Person.create({
             'login': request.form['login'], 
             'password': request.form['password'], 
             'email': request.form['email'],
             }).save()
-        return 'REGISTER'
+        session['logged_in'] = True
+        flash("You are connected !")
+        return redirect("/") #FIXME
 
 @app.route('/register', methods=('GET',))
 def get_register():
