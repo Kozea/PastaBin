@@ -3,18 +3,15 @@
 {% for message in get_flashed_messages() %}
     <div class=flash>{{ message }}</div>
 {% endfor %}
-{%- if connect %} 
-  <h2>You are logged</h2>
-{% else %}
-  <h2>You are not logged</h2>
-  <form action="{{ url_for('connect') }}" method="post">
-    <dl>
-      <dt>Login:
-      <dd><input type=text name=login>
-      <dt>Password:
-      <dd><input type=password name=password>
-      <dd><input type=submit value=Connect>
-    </dl>
-  </form>
-{% endif -%}
+<h2>Connect</h2>
+<form action="{{ url_for('connect') }}" method="post">
+<dl>
+  <dt>Login:
+  <dd><input type=text name=login>
+  <dt>Password:
+  <dd><input type=password name=password>
+  <dd><input type=submit value=Connect>
+</dl>
+</form>
+<a href="{{ url_for('register') }}">Register here</a>
 {% endblock connect %}
