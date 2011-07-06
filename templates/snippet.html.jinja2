@@ -1,7 +1,7 @@
 {# extends "_layout.jinja2" #}
 
 {% block content %}
-<h2>{{ snippet.id }}</h2>
+<h2>{{ snippet.title }}</h2>
 <code>
 <pre>{{ snippet.text }}
 </pre>
@@ -9,9 +9,7 @@
 
 <ul>
   <li>
-      <a href="{{url_for("???", snippet_id = item.id)}}">Modifier</a>
+      <a href="{{ url_for("modify_snippet", id=snippet.id) }}">Modifier</a>
   </li>
-    <li>
-      <a href="{{url_for("???", snippet_id = item.id)}}">Supprimer</a>
-  </li>
+</ul>
 {% endblock content %}
