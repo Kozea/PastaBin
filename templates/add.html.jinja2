@@ -1,0 +1,16 @@
+{# extends "_layout.jinja2" #}
+
+{% block content %}
+<form action="{{ url_for("add_snippet") }}" method="post">
+	<fieldset>
+		<legend>Informations</legend>
+		<label for="snip_title">Title:</label> <input type="text" name="snip_title" id="snip_title" />
+		<label for="snip_language">Language:</label> <input type="text" name="snip_language" id="snip_language" /><!-- FIXME -->
+	</fieldset>
+	<fieldset>
+		<legend>Text</legend>
+		<textarea name="snip_text" id="snip_text" rows="14" cols="80"></textarea>
+	</fieldset>
+	<input type="submit" name="submite" value="Pasta !" />
+</form>
+{% endblock content %}
