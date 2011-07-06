@@ -55,6 +55,7 @@ app = Flask(__name__)
 
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
+
 @app.route("/add", methods=("GET", "POST"))
 def add_snippet():
     if request.method == "POST":
@@ -69,10 +70,12 @@ def add_snippet():
     else:
         return render_template("add.html.jinja2")
 
+
 @app.route("/")
 def index():
     data =  {"snippets" : Snippet.all.execute()}
     return render_template("index.html.jinja2", **data)
+
 
 @app.route("/snippet/<int:snippet_id>")
 def get_snippet_by_id(snippet_id):
@@ -84,8 +87,6 @@ def get_snippet_by_id(snippet_id):
 @app.route('/connect', methods=['GET', 'POST'])
 def connect():
     if request.method == 'POST':
-        #import pdb
-        #pdb.set_trace()
         item = Person.all.filter(
             c.login == request.form['login']).one(None)
         item = item.execute()
@@ -117,7 +118,7 @@ def modify_snippet(id):
             item['title'] = request.form['snip_title']
             item['text'] = request.form['snip_text']
             item.save()
-        return redirect("/") #FIXME
+        return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
     else:
         try:
             item = Snippet.all.filter(c.id == id).one(None).execute()
