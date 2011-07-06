@@ -37,18 +37,33 @@
 ###########################################################################
 
 
+from datetime import datetime
+
 from flask import *
 from multicorn.declarative import declare, Property
 from access_points import *
 
 
 app = Flask(__name__)
+g.user_id = None
+g.user_login = "Guest"
+g.user_password = None
+g.email = None
 
+# set the secret key.  keep this really secret:
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 @app.route("/add", methods=("GET", "POST"))
 def add_snippet():
     if request.method == "POST":
-        return "POST"
+        item = Snippet.create({
+            'person_id': None,
+            'date': datetime.now(),
+            'language': request.form['snip_language'],
+            'title': request.form['snip_title'],
+            'text': request.form['snip_text'],
+            })
+        return redirect("/s/IDontKnow") #FIXME
     else:
         return render_template("add.html.jinja2")
 
@@ -65,7 +80,18 @@ def get_snippet_by_id(snippet_id):
     return render_template("snippet.html.jinja2", **data)
 
 
+
+@app.route('/connect', methods=['GET', 'POST'])
+def connect():
+    if request.method == "POST":
+        if request.form['login'] == "toto" and request.form['password'] == "azerty" :
+            return "COOL"
+        else: 
+            return "ECHEC"
+    else:
+        return render_template("connect.html.jinja2")
+
+
 if __name__ == '__main__':
     app.run()
-
 
