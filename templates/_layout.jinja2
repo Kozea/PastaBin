@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+  <title>{{ name }} - {{ description }} {%- if page_title|d %} - {{ page_title }}{% endif %}</title>
+  <link href="{{ url_for('stylesheet') }}" media="screen" type="text/css" rel="stylesheet" />
+  <link href="{{ url_for('static_file', folder='img', path='img/icon.png') }}" type="image/png" rel="shortcut icon" />
+  <link href="{{ url_for('rss') }}" type="application/rss+xml" rel="alternate" title="{{ title }} RSS 2.0" />
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+  <header>
+    <h1><a href="/">{{ name }}</a></h1>
+  </header>
+
+  <nav>
+    <ul>
+{% for element in menu %}
+{% set active = element.link != request.path %}
+      <li>
+        {%- if active %}<a href="{{ element.link }}">{% endif -%}
+          {{ element.name }}
+        {%- if active %}</a>{% endif -%}
+      </li>
+{% endfor %}   
+    </ul>
+  </nav>
+
+{% block content %}{% endblock content %}
+
+  <footer>
+    <ul>
+      <li><a href="http://www.dyko.org/">Powered by Dyko</a></li>
+      <li><a href="http://www.csstyle.org/">Styled by CSStyle</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Optimized for Standards</a></li>
+    </ul>
+  </footer>
+</body>
+
+</html>
