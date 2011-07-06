@@ -75,13 +75,15 @@ def index():
     data =  {"snippets" : Snippet.all.execute()}
     return render_template("index.html.jinja2", **data)
 
+
+
 @app.route("/snippet/<int:snippet_id>")
 def get_snippet_by_id(snippet_id):
     item = Snippet.all.filter(
-        c.id == snippet_id).one().execute()
-    data = {"snippet" : item}
-    return render_template("snippet.html.jinja2", **data)
-
+        c.id == snippet_id).one()
+    data = {"snippet" : item.execute()}
+    return render_template("snippet.html.jinja2")
+    #return render_template('connect.html.jinja2')
 
 
 @app.route('/connect', methods=['GET', 'POST'])
