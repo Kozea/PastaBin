@@ -37,6 +37,8 @@
 ###########################################################################
 
 
+from datetime import datetime
+
 from flask import *
 from multicorn.declarative import declare, Property
 from access_points import *
@@ -54,7 +56,14 @@ app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 @app.route("/add", methods=("GET", "POST"))
 def add_snippet():
     if request.method == "POST":
-        return "POST"
+        item = Snippet.create({
+            'person_id': None,
+            'date': datetime.now(),
+            'language': request.form['snip_language'],
+            'title': request.form['snip_title'],
+            'text': request.form['snip_text'],
+            })
+        return redirect("/s/IDontKnow") #FIXME
     else:
         return render_template("add.html.jinja2")
 
@@ -71,5 +80,5 @@ def connect():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
 
