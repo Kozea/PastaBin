@@ -1,5 +1,16 @@
 {# {% extends "_layout.jinja2" %} #}
 {% block content %}
+
+{% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+{% endfor %}
+
+{% if not session.logged_in %}
+<a href="{{ url_for('connect') }}">log in</a>
+{% else %}
+<a href="{{ url_for('disconnect') }}">log out</a>
+{% endif %}
+
 <h4>Les plus récents</h4>
 <ul class="index">
 {% for item in snippets %}

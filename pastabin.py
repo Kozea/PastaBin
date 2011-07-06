@@ -53,8 +53,8 @@ app = Flask(__name__)
 #g.user_password = None
 #g.email = None
 
-# set the secret key.  keep this really secret:
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+
 
 @app.route("/add", methods=("GET", "POST"))
 def add_snippet():
@@ -70,6 +70,7 @@ def add_snippet():
     else:
         return render_template("add.html.jinja2")
 
+
 @app.route("/")
 def index():
     data =  {"snippets" : Snippet.all.execute()}
@@ -80,21 +81,19 @@ def index():
 @app.route("/snippet/<int:snippet_id>")
 def get_snippet_by_id(snippet_id):
     item = Snippet.all.filter(
-        c.id == snippet_id).one()
-    data = {"snippet" : item.execute()}
-    return render_template("snippet.html.jinja2")
-    #return render_template('connect.html.jinja2')
+        c.id == snippet_id).one().execute()
+    data = {"snippet" : item}
+    return render_template("snippet.html.jinja2", **data)
 
 
 @app.route('/connect', methods=['GET', 'POST'])
 def connect():
     if request.method == 'POST':
-        #import pdb
-        #pdb.set_trace()
         item = Person.all.filter(
             c.login == request.form['login']).one(None)
         item = item.execute()
         if item['password'] == request.form['password']:
+            session['logged_in'] = True
             flash("You are connected !")
             return redirect("/") #FIXME
         else:
@@ -103,9 +102,16 @@ def connect():
     else:
         return render_template('connect.html.jinja2')
 
+@app.route('/disconnect')
+def disconnect():
+    session.pop('logged_in', None)
+    flash('You are disconnected !')
+    return redirect("/") #FIXME
 
 @app.route("/modify/<int:id>", methods=("GET", "POST"))
 def modify_snippet(id):
+    if not session.get('logged_in'):
+        return redirect(url_for("connect"))
     if request.method == "POST":
         item = Snippet.all.filter(c.id == id).one(None).execute()
         if item is not None:
@@ -114,7 +120,7 @@ def modify_snippet(id):
             item['title'] = request.form['snip_title']
             item['text'] = request.form['snip_text']
             item.save()
-        return redirect("/") #FIXME
+        return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
     else:
         try:
             item = Snippet.all.filter(c.id == id).one(None).execute()
@@ -130,7 +136,6 @@ def modify_snippet(id):
                     )
         else:
             return "None" #FIXME
-
 
 if __name__ == '__main__':
     app.run()

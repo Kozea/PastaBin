@@ -1,8 +1,10 @@
 {# extends "_layout.jinja2" #}
 
 {% block content %}
-<!--
-<h2>{{ snippet.title }}</h2>
+
+
+<h2>{{ snippet.title }} - this code was posted by GUEST </h2>
+ 
 <code>
 <pre>{{ snippet.text }}
 </pre>
@@ -10,8 +12,9 @@
 
 <ul>
   <li>
-      <a href="{{url_for("", snippet_id = snippet.id)}}">Modifier</a>
-  </li>
 
-  hello
+      <a href="{{ url_for("modify_snippet", id=snippet.id) }}">Modifier</a>
+  </li>
+</ul>
+
 {% endblock content %}
