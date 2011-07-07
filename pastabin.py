@@ -46,6 +46,13 @@ from datetime import datetime
 from flask import *
 from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
+from pygments.lexers import get_lexer_for_filename
+from pygments.lexers import guess_lexer
+from pygments.style import Style
+from pygments.token import Keyword, Name, Comment, String, Error, Number
 
 
 
@@ -55,6 +62,17 @@ from access_points import *
 app = Flask(__name__)
 
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+
+
+class PygmentsStyle(Style):
+    """Pygments style based on Solarized."""
+    styles = {
+        Keyword: '#b58900',
+        Name: '#cb4b16',
+        Comment: '#839496',
+        String: '#2aa198',
+        Error: '#dc322f',
+        Number: '#859900'}
 
 
 def get_page_informations(title="Unknown", menu_active=None):
@@ -121,6 +139,24 @@ def index():
 def get_snippet_by_id(snippet_id):
     item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
+        lexer = None
+        try:
+            lexer = get_lexer_by_name(item['language'].lower())
+        except:
+            try:
+                lexer = get_lexer_for_filename(item['title'].lower())
+            except:
+                try:
+                    lexer = guess_lexer(item['text'])
+                except:
+                    lexer = get_lexer_by_name("text")
+        formatter = HtmlFormatter(
+                linenos=True,
+                style=PygmentsStyle,
+                noclasses=True,
+                nobackground=True,
+                )
+        item['text'] = highlight(item['text'], lexer, formatter)
         return render_template(
                 "snippet.html.jinja2",
                 snippet=item,
