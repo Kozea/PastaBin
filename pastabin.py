@@ -37,6 +37,10 @@
 ###########################################################################
 
 
+__app_name__ = "PastaBin"
+__version__ = "0.1"
+
+
 from datetime import datetime
 
 from flask import *
@@ -47,15 +51,43 @@ from access_points import *
 
 
 app = Flask(__name__)
-#g.user_id = None
-#g.user_login = "Guest"
-#g.user_password = None
-#g.email = None
 
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 
-@app.route("/", methods=("GET",))
+def get_page_informations(title="Unknown", menu_active=None):
+    """Retun various informations like the menu, the page title,...
+
+    Arguments:
+        title -- The page title
+        menu_active -- The name of the current page
+    """
+    menu_items = [
+            {
+                'name': "index",
+                'title': "Home",
+                'url': url_for("index"),
+                'active': False,
+            },
+            {
+                'name': "add",
+                'title': "New snippet",
+                'url': url_for("add_snippet_get"),
+                'active': False,
+            },
+            ]
+    for item in menu_items:
+        if menu_active == item['name']:
+            item['active'] = True
+            break
+    return {
+            'menu': menu_items,
+            'title': title,
+            'appname': __app_name__,
+            }
+
+
+@app.route("/", methods=["GET"])
 def index():
     data =  {"snippets" : Snippet.all.execute()}
     return render_template("index.html.jinja2", **data)
@@ -70,12 +102,18 @@ def get_snippet_by_id(snippet_id):
         data = {"snippet" : item}
         return render_template("snippet.html.jinja2", **data)
     else:
-        return "ERREUR ouaaaaah",404
+        return "ERROR ouaaaaah", 404 #FIXME
 
 
 @app.route("/add", methods=["GET"])
 def add_snippet_get():
-    return render_template("add.html.jinja2")
+    return render_template(
+            "add.html.jinja2",
+            page=get_page_informations(
+                title="Add a new Snippet",
+                menu_active="add"
+                ),
+            )
 
 
 @app.route("/add", methods=["POST"])
@@ -104,7 +142,7 @@ def modify_snippet_get(id):
                 snip_text=item['text'],
                 )
     else:
-        return "Groaaah!", 404
+        return "Groaaah!", 404 #FIXME
 
 
 @app.route("/modify/<int:id>", methods=["POST"])
