@@ -92,7 +92,6 @@ def add_snippet_post():
 
 @app.route("/modify/<int:id>", methods=["GET"])
 def modify_snippet_get(id):
-    #if not session.get('logged_in'):
     if not session.get('login'):
         return redirect(url_for("connect"))
     item = Snippet.all.filter(c.id == id).one(None).execute()
@@ -110,7 +109,6 @@ def modify_snippet_get(id):
 
 @app.route("/modify/<int:id>", methods=["POST"])
 def modify_snippet_post(id):
-    #if not session.get('logged_in'):
     if not session.get('login'):
         return redirect(url_for("connect"))
     item = Snippet.all.filter(c.id == id).one(None).execute()
@@ -166,7 +164,6 @@ def connect():
             return redirect(url_for("connect"))
     if item['password'] == request.form['password']:
         session['login'] = request.form['login']
-        #session['logged_in'] = True
         flash("Welcome %s !" % escape(session["login"]))
         return redirect("/") #FIXME
     else:
@@ -177,7 +174,6 @@ def connect():
 @app.route('/disconnect', methods=['GET'])
 def disconnect():
     session.pop('login', None)
-    #session.pop('logged_in', None)
     flash('You are disconnected !')
     return redirect("/") #FIXME
 
@@ -185,20 +181,24 @@ def disconnect():
 @app.route('/register', methods=['POST'])
 def register():
     if '' == request.form.get('login', '') \
-        or '' == request.form.get('password', '') \
+        or '' == request.form.get('password1', '') \
+        or '' == request.form.get('password2', '') \
         or '' == request.form.get('email', '') :
-        flash("Empty field")
+        flash("Some fields are empty !")
         return redirect(url_for("register"))
     else:
-        person = Person.create({
-            'login': request.form['login'], 
-            'password': request.form['password'], 
-            'email': request.form['email'],
-            }).save()
-        session['login'] = request.form['login']
-        #session['logged_in'] = True
-        flash("Welcome %s !" % escape(session["login"]))
-        return redirect("/") #FIXME
+        if request.form['password1'] != request.form['password2']:
+            flash("Passwords are not same !")
+            return redirect(url_for("register"))
+        else: 
+            person = Person.create({
+                'login': request.form['login'], 
+                'password': request.form['password2'], 
+                'email': request.form['email'],
+                }).save()
+            session['login'] = request.form['login']
+            flash("Welcome %s !" % escape(session["login"]))
+            return redirect("/") #FIXME
 
 
 @app.route('/register', methods=['GET'])
@@ -206,14 +206,15 @@ def get_register():
     return render_template('register.html.jinja2')
 
 @app.route('/account', methods=['POST'])
-def account(id):
-    #if not session.get('logged_in'):
+def account():
     if not session.get('login'):
         return redirect(url_for("connect"))
-    item = Person.all.filter(c.id == id).one(None).execute()
+    item = Person.all.filter(c.login == session['login']).one(None).execute()
+    if request.form['password1'] != request.form['password2']:
+        flash("Passwords are not same !")
+        return redirect(url_for("account"))
     if item is not None:
-        item['login'] = request.form['login']
-        item['password'] = request.form['password']
+        item['password'] = request.form['password1']
         item['email'] = request.form['email']
         item.save()
     flash("Your account is been modify !")
@@ -221,7 +222,9 @@ def account(id):
 
 @app.route('/account', methods=['GET'])
 def get_account():
-    return render_template('account.html.jinja2')
+    item = Person.all.filter(c.login == session['login']).one(None).execute()
+    data = {"person" : item}
+    return render_template('account.html.jinja2', **data)
 
 
 if __name__ == '__main__':
