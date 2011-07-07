@@ -1,21 +1,16 @@
-{# {% extends "_layout.jinja2" %} #}
-{% block connect %}
-{% for message in get_flashed_messages() %}
-    <div class=flash>{{ message }}</div>
-{% endfor %}
- 
-<h2>Register</h2>
-
+{% extends "_layout.jinja2" %}
+{% block content %}
 <form action="{{ url_for('register') }}" method="post">
-<dl>
-  <dt>Login:
-  <dd><input type=text name=login>
-  <dt>Password:
-  <dd><input type=password name=password>
-  <dt>Email:
-  <dd><input type=text name=email>
-  <dd><input type=submit value=Register>
-</dl>
+<fieldset>
+    <legend>Informations</legend>
+    <label for="login">Login:</label> <input type="text" name="login" id="login" />
+    <label for="password1">Password:</label> <input type="password" name="password1" id="password1" />
+    <label for="password2">Password (verification):</label> <input type="password" name="password2" id="password2" />
+    <label for="email">Email:</label> <input type="text" name="email" id="email" />
+  </fieldset>
+  <div class="btn">
+    <a href="{{ url_for("index") }}">Cancel</a>
+    <input type="submit" name="register" value="Register now!" />
+  </div>
 </form>
-
-{% endblock connect %}
+{% endblock content %}

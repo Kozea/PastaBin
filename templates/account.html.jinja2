@@ -1,6 +1,6 @@
 {% extends "_layout.jinja2" %}
 {% block content %}
-<form action="{{ url_for('account') }}" method="post">
+<form action="{{ url_for("account") }}" method="post">
   <fieldset>
     <legend>Informations</legend>
     <label for="login">Login:</label> <input type="text" name="login" id="login" value="{{ person.login }}" />

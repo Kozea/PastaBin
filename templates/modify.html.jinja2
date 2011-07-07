@@ -1,17 +1,18 @@
-{# extends "_layout.jinja2" #}
-
+{% extends "_layout.jinja2" %}
 {% block content %}
-<h2>Modify a snippet</h2>
 <form action="{{ url_for("modify_snippet_post", id=snip_id) }}" method="post">
-	<fieldset>
-		<legend>Informations</legend>
-		<label for="snip_title">Title:</label> <input type="text" name="snip_title" id="snip_title" value="{{ snip_title }}" />
-		<label for="snip_language">Language:</label> <input type="text" name="snip_language" id="snip_language" value="{{ snip_language }}" /><!-- FIXME -->
-	</fieldset>
-	<fieldset>
-		<legend>Text</legend>
-		<textarea name="snip_text" id="snip_text" rows="14" cols="80">{{ snip_text }}</textarea>
-	</fieldset>
-	<input type="submit" name="submite" value="re-Pasta !" />
+  <fieldset>
+    <legend>Informations</legend>
+    <label for="snip_title">Title:</label> <input type="text" name="snip_title" id="snip_title" value="{{ snip_title }}" />
+    <label for="snip_language">Language:</label> <input type="text" name="snip_language" id="snip_language" value="{{ snip_language }}" /><!-- FIXME -->
+  </fieldset>
+  <fieldset>
+    <legend>Text</legend>
+    <textarea name="snip_text" id="snip_text" rows="14" cols="80">{{ snip_text }}</textarea>
+  </fieldset>
+  <div class="btn">
+    <a href="{{ url_for("get_snippet_by_id", snippet_id=snip_id) }}">Cancel</a>
+    <input type="submit" name="repasta" value="re-Pasta!" />
+  </div>
 </form>
 {% endblock content %}

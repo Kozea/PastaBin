@@ -24,7 +24,7 @@
 			</ul>
 		</nav>
 
-		{% with flashes = get_flashed_messages() %}
+		{% with flashes = get_flashed_messages(with_categories=true) %}
 		{% if flashes %}
 		<aside id="flashes">
 			<ul>

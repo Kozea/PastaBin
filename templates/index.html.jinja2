@@ -1,25 +1,21 @@
-{# {% extends "_layout.jinja2" %} #}
+{% extends "_layout.jinja2" %}
 {% block content %}
+<h3>About PastaBin</h3>
+<p>Text about PastaBin. Lorem ipsum dolor sit amet, consectetur adipiscing
+elit. Quisque ac elit nec orci egestas adipiscing quis id erat.</p>
+<p>Vestibulum eu feugiat elit. Donec porttitor, risus sed dapibus convallis,
+risus turpis sagittis felis, nec adipiscing enim neque quis nisl. Mauris
+mauris justo, scelerisque ultrices interdum vel, accumsan vitae arcu.
+Vestibulum et bibendum erat. Aenean sed nisl dui. Pellentesque varius,
+nulla eget lobortis blandit, libero arcu facilisis libero, et commodo enim
+magna sit amet justo. Lorem ipsum dolor sit amet, consectetur adipiscing
+elit. Pellentesque habitant morbi tristique senectus et netus et
+malesuada fames ac turpis egestas.</p>
 
-{% for message in get_flashed_messages() %}
-    <div class=flash>{{ message }}</div>
-{% endfor %}
-
-{% if not session.login %}
-<a href="{{ url_for('connect') }}">log in</a>
-{% else %}
-<a href="{{ url_for('disconnect') }}">log out</a>
-<a href="{{ url_for('account') }}">my account</a>
-<a href="#">my snippets</a>
-{% endif %}
-
-<h4>Les plus récents</h4>
+<h3>Last snippets</h3>
 <ul class="index">
-{% for item in snippets %}
-  <li>
-    <a href="{{url_for("get_snippet_by_id", snippet_id = item.id)}}">{{ item.title }}</a>
-  </li>
+{% for snippet in snippets %}
+<li><a href="{{ url_for("get_snippet_by_id", snippet_id=snippet.id)}}" >{{ snippet.title }} <span>(posted by [LOGIN], on {{ snippet.date }})</span></a></li>
 {% endfor %}
 </ul>
-
 {% endblock content %}

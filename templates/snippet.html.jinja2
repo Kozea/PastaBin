@@ -1,18 +1,18 @@
-{# extends "_layout.jinja2" #}
-
+{% extends "_layout.jinja2" %}
 {% block content %}
+<ul>
+  <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
+  <li class="delete"><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li> <!-- FIXME -->
+</ul>
 
-
-<h2>{{ snippet.title }} - this code was posted by GUEST </h2>
- 
+<p>By [LOGIN] on {{ snippet.date }}</p>
 <code>
-<pre>{{ snippet.text }}
-</pre>
+  <pre>{{ snippet.text }}
+  </pre>
 </code>
 
 <ul>
-  <li><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
-  <li><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li> <!-- FIXME -->
+  <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
+  <li class="delete"><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li> <!-- FIXME -->
 </ul>
-
 {% endblock content %}
