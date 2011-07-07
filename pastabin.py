@@ -123,6 +123,33 @@ def modify_snippet_post(id):
     return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
 
 
+@app.route("/delete/<int:id>", methods=["GET"])
+def delete_snippet_get(id):
+    if not session.get('logged_in'):
+        return redirect(url_for("connect"))
+    item = Snippet.all.filter(c.id == id).one(None).execute()
+    if item is not None:
+        return render_template(
+                "delete.html.jinja2",
+                snip_id=id,
+                snip_title=item['title'],
+                )
+    else:
+        return "Groaaah!", 404 #FIXME
+
+
+@app.route("/delete/<int:id>", methods=["POST"])
+def delete_snippet_post(id):
+    if not session.get('logged_in'):
+        return redirect(url_for("connect"))
+    item = Snippet.all.filter(c.id == id).one(None).execute()
+    if item is not None:
+        item.delete()
+        return redirect(url_for("index"))
+    else:
+        return "Groaaah!", 404 #FIXME
+
+
 @app.route('/connect', methods=('GET',))
 def get_connect():
     return render_template('connect.html.jinja2')
