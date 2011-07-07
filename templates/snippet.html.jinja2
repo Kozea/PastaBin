@@ -1,20 +1,24 @@
 {% extends "_layout.jinja2" %}
 {% block content %}
 
-{% if session.login %}
+{% if session.id %}
 <ul>
   <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
+{% if snippet.person.id == session.id %}
   <li class="delete"><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li> <!-- FIXME -->
+{% endif %}
 </ul>
 {% endif %}
 
 <p>By {{ snippet.person.login }} on {{ snippet.date | date_format}}</p>
 <pre><code>{{ snippet.text }}</code></pre>
 
-{% if session.login %}
+{% if session.id  %}
 <ul>
   <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
+{% if snippet.person.id == session.id %}
   <li class="delete"><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li> <!-- FIXME -->
+{% endif %}
 </ul>
 {% endif %}
 

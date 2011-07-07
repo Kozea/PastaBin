@@ -132,7 +132,7 @@ def get_snippet_by_id(snippet_id):
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-    item = Snippet.all.filter(c.person.id == session['id']).execute()
+    item = Snippet.all.filter(c.person.id == get_user_id()).execute()
     if item is not None:
         return render_template(
                 "my_snippets.html.jinja2",
@@ -316,7 +316,7 @@ def account():
 
 @app.route('/account', methods=['GET'])
 def get_account():
-    item = Person.all.filter(c.id == session['id']).one(None).execute()
+    item = Person.all.filter(c.id == get_user_id()).one(None).execute()
     return render_template(
             'account.html.jinja2',
             page=get_page_informations(title="Manage my account"),
