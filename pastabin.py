@@ -47,6 +47,8 @@ from flask import *
 from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
 
+
+
 from access_points import *
 
 
@@ -111,6 +113,7 @@ def index():
             snippets=Snippet.all.sort(-c.id)[:10].execute(),
             page=get_page_informations(title="Home"),
             )
+
 
 
 @app.route("/snippet/<int:snippet_id>", methods=["GET"])
@@ -308,6 +311,7 @@ def account():
     return redirect(url_for("index"))
 
 
+
 @app.route('/account', methods=['GET'])
 def get_account():
     item = Person.all.filter(c.id == session['id']).one(None).execute()
@@ -318,7 +322,12 @@ def get_account():
             )
 
 
+
+
 if __name__ == '__main__':
 #    app.run()
+    @app.template_filter("date_format")
+    def pretty_datetime(d):
+        return d.strftime("%A %d. %B %Y - %H:%M:%S").decode('utf-8')
     app.run(debug=True)
 
