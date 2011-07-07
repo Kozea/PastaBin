@@ -4,7 +4,7 @@
 {% if session.id %}
 <ul>
   <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
-{% if snippet.person.id == session.id %}
+{% if snippet.person.id == session.get("id", 0) %}
   <li class="delete"><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li> <!-- FIXME -->
 {% endif %}
 </ul>
@@ -16,7 +16,7 @@
 {% if session.id  %}
 <ul>
   <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
-{% if snippet.person.id == session.id %}
+{% if snippet.person.id == session.get("id", 0) %}
   <li class="delete"><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li> <!-- FIXME -->
 {% endif %}
 </ul>
