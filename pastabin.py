@@ -79,9 +79,12 @@ def index():
 @app.route("/snippet/<int:snippet_id>", methods=("GET",))
 def get_snippet_by_id(snippet_id):
     item = Snippet.all.filter(
-        c.id == snippet_id).one().execute()
-    data = {"snippet" : item}
-    return render_template("snippet.html.jinja2", **data)
+        c.id == snippet_id).one(None).execute()
+    if item is not None:
+        data = {"snippet" : item}
+        return render_template("snippet.html.jinja2", **data)
+    else:
+        return "ERREUR ouaaaaah",404
 
 
 @app.route('/connect', methods=['POST',])
@@ -148,7 +151,7 @@ def register():
         flash("Empty field")
         return redirect(url_for("register"))
     else:
-        Person.create({
+        person = Person.create({
             'login': request.form['login'], 
             'password': request.form['password'], 
             'email': request.form['email'],
@@ -161,7 +164,10 @@ def register():
 def get_register():
     return render_template('register.html.jinja2')
 
+
+
+
 if __name__ == '__main__':
-    app.run()
-#    app.run(debug=True)
+#    app.run()
+    app.run(debug=True)
 
