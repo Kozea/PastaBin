@@ -259,7 +259,10 @@ def account(id):
 
 @app.route('/account', methods=['GET'])
 def get_account():
-    return render_template('account.html.jinja2')
+    return render_template(
+            'account.html.jinja2',
+            page=get_page_informations(title="Manage my account"),
+            )
 
 
 if __name__ == '__main__':
