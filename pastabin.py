@@ -173,6 +173,23 @@ def register():
 def get_register():
     return render_template('register.html.jinja2')
 
+@app.route('/account', methods=['POST'])
+def account(id):
+    if not session.get('logged_in'):
+        return redirect(url_for("connect"))
+    item = Person.all.filter(c.id == id).one(None).execute()
+    if item is not None:
+        item['login'] = request.form['login']
+        item['password'] = request.form['password']
+        item['email'] = request.form['email']
+        item.save()
+    flash("Your account is been modify !")
+    return redirect("/") #FIXME
+
+@app.route('/account', methods=['GET'])
+def get_account():
+    return render_template('account.html.jinja2')
+
 
 if __name__ == '__main__':
 #    app.run()
