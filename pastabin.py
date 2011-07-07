@@ -61,7 +61,7 @@ def index():
     return render_template("index.html.jinja2", **data)
 
 
-@app.route("/snippet/<int:snippet_id>", methods=("GET",))
+@app.route("/snippet/<int:snippet_id>", methods=["GET"])
 @app.route("/s/<int:snippet_id>", methods=["GET"])
 def get_snippet_by_id(snippet_id):
     item = Snippet.all.filter(
@@ -73,19 +73,21 @@ def get_snippet_by_id(snippet_id):
         return "ERREUR ouaaaaah",404
 
 
-@app.route("/add", methods=["GET", "POST"])
-def add_snippet():
-    if request.method == "POST":
-        item = Snippet.create({
-            'person_id': None,
-            'date': datetime.now(),
-            'language': request.form['snip_language'],
-            'title': request.form['snip_title'],
-            'text': request.form['snip_text'],
-            }).save()
-        return redirect("/s/IDontKnow") #FIXME
-    else:
-        return render_template("add.html.jinja2")
+@app.route("/add", methods=["GET"])
+def add_snippet_get():
+    return render_template("add.html.jinja2")
+
+
+@app.route("/add", methods=["POST"])
+def add_snippet_post():
+    item = Snippet.create({
+        'person_id': None,
+        'date': datetime.now(),
+        'language': request.form['snip_language'],
+        'title': request.form['snip_title'],
+        'text': request.form['snip_text'],
+        }).save()
+    return redirect("/s/IDontKnow") #FIXME
 
 
 @app.route("/modify/<int:id>", methods=["GET"])
@@ -142,7 +144,7 @@ def connect():
         return redirect(url_for("connect"))
 
 
-@app.route('/disconnect', method=['GET'])
+@app.route('/disconnect', methods=['GET'])
 def disconnect():
     session.pop('logged_in', None)
     flash('You are disconnected !')
