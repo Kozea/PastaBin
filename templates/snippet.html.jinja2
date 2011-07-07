@@ -6,10 +6,7 @@
 </ul>
 
 <p>By [LOGIN] on {{ snippet.date }}</p>
-<code>
-  <pre>{{ snippet.text }}
-  </pre>
-</code>
+<pre><code>{{ snippet.text }}</code></pre>
 
 <ul>
   <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
