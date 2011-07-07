@@ -94,6 +94,16 @@ def get_page_informations(title="Unknown", menu_active=None):
             }
 
 
+def get_user_id():
+    """Return the user id if logged, 0 else"""
+    return session.get("id", 0)
+
+
+def get_user_login():
+    """Return the user id if logged, 0 else"""
+    return session.get("login", "Guest")
+
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template(
@@ -144,13 +154,14 @@ def add_snippet_get():
 @app.route("/add", methods=["POST"])
 def add_snippet_post():
     item = Snippet.create({
-        'person_id': None, #FIXME -> get from session
+        'person': get_user_id(),
         'date': datetime.now(),
         'language': request.form['snip_language'],
         'title': request.form['snip_title'],
         'text': request.form['snip_text'],
-        }).save()
-    return redirect("/s/IDontKnow") #FIXME
+        })
+    item.save()
+    return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
 
 
 @app.route("/modify/<int:id>", methods=["GET"])
