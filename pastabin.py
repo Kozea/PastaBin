@@ -47,6 +47,8 @@ from flask import *
 from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
 
+
+
 from access_points import *
 
 
@@ -103,6 +105,7 @@ def index():
             )
 
 
+
 @app.route("/snippet/<int:snippet_id>", methods=["GET"])
 @app.route("/s/<int:snippet_id>", methods=["GET"])
 def get_snippet_by_id(snippet_id):
@@ -144,7 +147,7 @@ def add_snippet_get():
 @app.route("/add", methods=["POST"])
 def add_snippet_post():
     item = Snippet.create({
-        'person_id': None, #FIXME -> get from session
+        'person_id': None, #FIXME 
         'date': datetime.now(),
         'language': request.form['snip_language'],
         'title': request.form['snip_title'],
@@ -294,6 +297,7 @@ def account():
         item.save()
     flash("Your account is been modify !")
     return redirect("/") #FIXME
+
 
 @app.route('/account', methods=['GET'])
 def get_account():
