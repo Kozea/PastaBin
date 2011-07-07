@@ -246,7 +246,7 @@ def connect():
         session['login'] = request.form['login']
         session['id'] = item['id']
         flash("Welcome %s !" % escape(session["login"]), "ok")
-        return redirect("/") #FIXME
+        return redirect(url_for("index"))
     else:
         flash("Invalid login or password !")
         return redirect(url_for("connect"))
@@ -256,7 +256,7 @@ def connect():
 def disconnect():
     session.pop('login', None)
     flash('You are disconnected !')
-    return redirect("/") #FIXME
+    return redirect(url_for("index"))
 
 
 @app.route('/register', methods=['GET'])
@@ -284,27 +284,31 @@ def register():
                 'login': request.form['login'], 
                 'password': request.form['password2'], 
                 'email': request.form['email'],
-                }).save()
+                })
+            person.save()
             session['login'] = request.form['login']
-            session['id'] = item['id']
+            session['id'] = person['id']
             flash("Welcome %s !" % escape(session["login"]))
-            return redirect("/") #FIXME
+            return redirect(url_for("index"))
 
 
 @app.route('/account', methods=['POST'])
 def account():
-    if not session.get('login'):
+    if not session.get("id"):
         return redirect(url_for("connect"))
-    item = Person.all.filter(c.login == session['login']).one(None).execute()
-    if request.form['password1'] != request.form['password2']:
+    item = Person.all.filter(c.id == session["id"]).one(None).execute()
+    if request.form["password1"] != request.form["password2"]:
         flash("Passwords are not same !")
         return redirect(url_for("account"))
     if item is not None:
-        item['password'] = request.form['password1']
-        item['email'] = request.form['email']
+        item["login"] = request.form["login"]
+        item["password"] = request.form["password1"]
+        item["email"] = request.form["email"]
         item.save()
-    flash("Your account is been modify !")
-    return redirect("/") #FIXME
+        session["login"] = request.form["login"]
+        flash("Your account is been modify !")
+    return redirect(url_for("index"))
+
 
 @app.route('/account', methods=['GET'])
 def get_account():
