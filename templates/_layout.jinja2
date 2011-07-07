@@ -2,66 +2,66 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 
-	<head>
-		<meta content="text/html; charset=utf-8" http-equiv="content-type" />
-		<title>{{ page.title }} - {{ page.appname }}</title>
-	</head>
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <title>{{ page.title }} - {{ page.appname }}</title>
+  </head>
 
-	<body>
-		<header>
-			<h1><a href="{{ url_for("index") }}">{{ page.appname }}</a></h1>
-		</header>
+  <body>
+    <header>
+      <h1><a href="{{ url_for("index") }}">{{ page.appname }}</a></h1>
+    </header>
 
-		<nav>
-			<ul>
-				{% for item in page.menu %}
-					{% if item.active -%}
-						<li><a href="{{ item.url }}" class="active {{ item.name }}">{{ item.title }}</a></li>
-					{% else -%}
-						<li><a href="{{ item.url }}" class="{{ item.name }}">{{ item.title }}</a></li>
-					{%- endif %}
-				{%- endfor %}
-			</ul>
-		</nav>
+    <nav>
+      <ul>
+        {% for item in page.menu %}
+          {% if item.active -%}
+            <li><a href="{{ item.url }}" class="active {{ item.name }}">{{ item.title }}</a></li>
+          {% else -%}
+            <li><a href="{{ item.url }}" class="{{ item.name }}">{{ item.title }}</a></li>
+          {%- endif %}
+        {%- endfor %}
+      </ul>
+    </nav>
 
-		{% with flashes = get_flashed_messages(with_categories=true) %}
-		{% if flashes %}
-		<aside id="flashes">
-			<ul>
-				{% for cat, msg in flashes %}
-				<li class="{{ cat }}">{{ msg }}</li>
-				{% endfor %}
-			</ul>
-		</aside>
-		{% endif %}
-		{% endwith %}
+    {% with flashes = get_flashed_messages(with_categories=true) %}
+    {% if flashes %}
+    <aside id="flashes">
+      <ul>
+        {% for cat, msg in flashes %}
+        <li class="{{ cat }}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    </aside>
+    {% endif %}
+    {% endwith %}
 
-		<section>
-			<h2>{{ page.title }}</h2>
-			{% block content %}
-			{% endblock content %}
-		</section>
+    <section>
+      <h2>{{ page.title }}</h2>
+      {% block content %}
+      {% endblock content %}
+    </section>
 
-		<aside id="userinfos">
-			{% if not session.login %}
-				<ul>
-					<li class="connect"><a href="{{ url_for("connect") }}">Login</a></li>
-					<li class="register"><a href="{{ url_for("register") }}">Register</a></li>
-				</ul>
-			{% else %}
-				<ul>
-					<li class="infos">Connected as <strong>{{ session.login }}</strong></li>
-					<li class="manage"><a href="{{ url_for("account") }}">Manage my account</a></li>
-					<li class="disconnect"><a href="{{ url_for("disconnect") }}">Logout</a></li>
-				</ul>
-			{% endif %}
-		</aside>
+    <aside id="userinfos">
+      {% if not session.login %}
+        <ul>
+          <li class="connect"><a href="{{ url_for("connect") }}">Login</a></li>
+          <li class="register"><a href="{{ url_for("register") }}">Register</a></li>
+        </ul>
+      {% else %}
+        <ul>
+          <li class="infos">Connected as <strong>{{ session.login }}</strong></li>
+          <li class="manage"><a href="{{ url_for("account") }}">Manage my account</a></li>
+          <li class="disconnect"><a href="{{ url_for("disconnect") }}">Logout</a></li>
+        </ul>
+      {% endif %}
+    </aside>
 
-		<footer>
-			<ul>
-			  <li><a href="http://multicorn.org/">Powered by Multicorn</a></li>
-			</ul>
-		</footer>
-	</body>
+    <footer>
+      <ul>
+        <li><a href="http://multicorn.org/">Powered by Multicorn</a></li>
+      </ul>
+    </footer>
+  </body>
 
 </html>
