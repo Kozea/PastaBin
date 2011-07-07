@@ -73,6 +73,11 @@ def get_snippet_by_id(snippet_id):
         return "ERREUR ouaaaaah",404
 
 
+@app.route("/my_snippet", methods=["GET"])
+def my_snippet():
+    #TODO get person_id 
+    return render_template("my_snippet.html.jinja2")
+
 @app.route("/add", methods=["GET"])
 def add_snippet_get():
     return render_template("add.html.jinja2")
@@ -81,7 +86,7 @@ def add_snippet_get():
 @app.route("/add", methods=["POST"])
 def add_snippet_post():
     item = Snippet.create({
-        'person_id': None,
+        'person_id': None, #FIXME -> get from session
         'date': datetime.now(),
         'language': request.form['snip_language'],
         'title': request.form['snip_title'],
