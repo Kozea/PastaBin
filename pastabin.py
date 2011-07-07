@@ -54,6 +54,8 @@ from pygments.lexers import guess_lexer
 from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, Number
 
+
+
 from access_points import *
 
 
@@ -118,7 +120,7 @@ def get_user_id():
 
 
 def get_user_login():
-    """Return the user id if logged, 0 else"""
+    """Return the user login if logged, Guest else"""
     return session.get("login", "Guest")
 
 
@@ -126,9 +128,10 @@ def get_user_login():
 def index():
     return render_template(
             "index.html.jinja2",
-            snippets=Snippet.all.sort(-c.id)[:10].execute(),
+            snippets=Snippet.all.sort(-c.date)[:10].execute(),
             page=get_page_informations(title="Home"),
             )
+
 
 
 @app.route("/snippet/<int:snippet_id>", methods=["GET"])
@@ -165,15 +168,19 @@ def get_snippet_by_id(snippet_id):
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-    item = Snippet.all.filter(c.id == session['id']).execute()
-    return render_template(
-            "my_snippets.html.jinja2",
-            snippets=item,
-            page=get_page_informations(
-                title="My snippets",
-                menu_active="my_snippets",
-                ),
-            )
+
+    item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
+    if item is not None:
+        return render_template(
+                "my_snippets.html.jinja2",
+                snippets=item,
+                page=get_page_informations(
+                    title="My snippets",
+                    menu_active="my_snippets",
+                    ),
+                )
+    else:
+        return "ERROR ouaaaaah", 404 #FIXME
 
 
 @app.route("/add", methods=["GET"])
@@ -279,7 +286,7 @@ def connect():
             flash("Empty field !")
             return redirect(url_for("connect"))
     if item['password'] == request.form['password']:
-        session['login'] = request.form['login']
+        session['login'] = item['login']
         session['id'] = item['id']
         flash("Welcome %s !" % escape(session["login"]), "ok")
         return redirect(url_for("index"))
@@ -311,21 +318,19 @@ def register():
         or '' == request.form.get('email', '') :
         flash("Some fields are empty !")
         return redirect(url_for("register"))
-    else:
-        if request.form['password1'] != request.form['password2']:
-            flash("Passwords are not same !")
-            return redirect(url_for("register"))
-        else: 
-            person = Person.create({
-                'login': request.form['login'], 
-                'password': request.form['password2'], 
-                'email': request.form['email'],
-                })
-            person.save()
-            session['login'] = request.form['login']
-            session['id'] = person['id']
-            flash("Welcome %s !" % escape(session["login"]))
-            return redirect(url_for("index"))
+    if request.form['password1'] != request.form['password2']:
+        flash("Passwords are not same !")
+        return redirect(url_for("register"))
+    person = Person.create({
+        'login': request.form['login'], 
+        'password': request.form['password2'], 
+        'email': request.form['email'],
+        })
+    person.save()
+    session['login'] = person['login']
+    session['id'] = person['id']
+    flash("Welcome %s !" % escape(session["login"]), "ok")
+    return redirect(url_for("index"))
 
 
 @app.route('/account', methods=['POST'])
@@ -346,9 +351,10 @@ def account():
     return redirect(url_for("index"))
 
 
+
 @app.route('/account', methods=['GET'])
 def get_account():
-    item = Person.all.filter(c.id == session['id']).one(None).execute()
+    item = Person.all.filter(c.id == get_user_id()).one(None).execute()
     return render_template(
             'account.html.jinja2',
             page=get_page_informations(title="Manage my account"),
@@ -356,7 +362,12 @@ def get_account():
             )
 
 
+
+
 if __name__ == '__main__':
 #    app.run()
+    @app.template_filter("date_format")
+    def pretty_datetime(d):
+        return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
     app.run(debug=True)
 
