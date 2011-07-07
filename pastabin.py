@@ -92,7 +92,8 @@ def add_snippet_post():
 
 @app.route("/modify/<int:id>", methods=["GET"])
 def modify_snippet_get(id):
-    if not session.get('logged_in'):
+    #if not session.get('logged_in'):
+    if not session.get('login'):
         return redirect(url_for("connect"))
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
@@ -109,7 +110,8 @@ def modify_snippet_get(id):
 
 @app.route("/modify/<int:id>", methods=["POST"])
 def modify_snippet_post(id):
-    if not session.get('logged_in'):
+    #if not session.get('logged_in'):
+    if not session.get('login'):
         return redirect(url_for("connect"))
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
@@ -136,8 +138,9 @@ def connect():
             flash("Empty field !")
             return redirect(url_for("connect"))
     if item['password'] == request.form['password']:
-        session['logged_in'] = True
-        flash("You are connected !")
+        session['login'] = request.form['login']
+        #session['logged_in'] = True
+        flash("Welcome %s !" % escape(session["login"]))
         return redirect("/") #FIXME
     else:
         flash("Invalid login or password !")
@@ -146,7 +149,8 @@ def connect():
 
 @app.route('/disconnect', methods=['GET'])
 def disconnect():
-    session.pop('logged_in', None)
+    session.pop('login', None)
+    #session.pop('logged_in', None)
     flash('You are disconnected !')
     return redirect("/") #FIXME
 
@@ -164,8 +168,9 @@ def register():
             'password': request.form['password'], 
             'email': request.form['email'],
             }).save()
-        session['logged_in'] = True
-        flash("You are connected !")
+        session['login'] = request.form['login']
+        #session['logged_in'] = True
+        flash("Welcome %s !" % escape(session["login"]))
         return redirect("/") #FIXME
 
 
@@ -175,7 +180,8 @@ def get_register():
 
 @app.route('/account', methods=['POST'])
 def account(id):
-    if not session.get('logged_in'):
+    #if not session.get('logged_in'):
+    if not session.get('login'):
         return redirect(url_for("connect"))
     item = Person.all.filter(c.id == id).one(None).execute()
     if item is not None:
