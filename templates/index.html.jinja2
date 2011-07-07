@@ -5,10 +5,12 @@
     <div class=flash>{{ message }}</div>
 {% endfor %}
 
-{% if not session.logged_in %}
+{% if not session.login %}
 <a href="{{ url_for('connect') }}">log in</a>
 {% else %}
 <a href="{{ url_for('disconnect') }}">log out</a>
+<a href="{{ url_for('account') }}">my account</a>
+<a href="#">my snippets</a>
 {% endif %}
 
 <h4>Les plus récents</h4>
