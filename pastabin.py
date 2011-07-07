@@ -324,7 +324,12 @@ def get_account():
             )
 
 
+
+
 if __name__ == '__main__':
 #    app.run()
+    @app.template_filter("date_format")
+    def pretty_datetime(d):
+        return d.strftime("%A %d. %B %Y - %H:%M:%S").decode('utf-8')
     app.run(debug=True)
 

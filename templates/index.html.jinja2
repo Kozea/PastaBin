@@ -15,7 +15,7 @@ malesuada fames ac turpis egestas.</p>
 <h3>Last snippets</h3>
 <ul class="index">
 {% for snippet in snippets %}
-<li><a href="{{ url_for("get_snippet_by_id", snippet_id=snippet.id)}}" >{{ snippet.title }} <span>(posted by {{ snippet.person.login }}, on {{ snippet.date }})</span></a></li>
+<li><a href="{{ url_for("get_snippet_by_id", snippet_id=snippet.id)}}" >{{ snippet.title }} <span>(posted by {{ snippet.person.login }}, on {{ snippet.date | date_format }})</span></a></li>
 {% endfor %}
 </ul>
 {% endblock content %}
