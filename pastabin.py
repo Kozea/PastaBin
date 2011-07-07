@@ -132,16 +132,18 @@ def get_snippet_by_id(snippet_id):
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-    item = Snippet.all.filter(c.id == session['id']).execute()
-    return render_template(
-            "my_snippets.html.jinja2",
-            snippets=item,
-            page=get_page_informations(
-                title="My snippets",
-                menu_active="my_snippets",
-                ),
-            )
-
+    item = Snippet.all.filter(c.person.id == session['id']).execute()
+    if item is not None:
+        return render_template(
+                "my_snippets.html.jinja2",
+                snippets=item,
+                page=get_page_informations(
+                    title="My snippets",
+                    menu_active="my_snippets",
+                    ),
+                )
+    else:
+        return "ERROR ouaaaaah", 404 #FIXME
 
 @app.route("/add", methods=["GET"])
 def add_snippet_get():
