@@ -73,10 +73,12 @@ def get_snippet_by_id(snippet_id):
         return "ERREUR ouaaaaah",404
 
 
-@app.route("/my_snippet", methods=["GET"])
-def my_snippet():
-    #TODO get person_id 
-    return render_template("my_snippet.html.jinja2")
+@app.route("/my_snippets/<string:person_login>/", methods=["GET"])
+def my_snippets(person_login):
+    item = Person.all.filter(
+        c.login == person_login).one(None).execute()
+    data = {"person" : item}
+    return render_template("my_snippets.html.jinja2", **data)
 
 @app.route("/add", methods=["GET"])
 def add_snippet_get():
@@ -96,7 +98,7 @@ def add_snippet_post():
 
 
 @app.route("/modify/<int:id>", methods=["GET"])
-def modify_snippet_get(id):
+def modify_snippet_get(id):j
     #if not session.get('logged_in'):
     if not session.get('login'):
         return redirect(url_for("connect"))
