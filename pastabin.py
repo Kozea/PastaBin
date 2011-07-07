@@ -65,9 +65,12 @@ def index():
 @app.route("/s/<int:snippet_id>", methods=["GET"])
 def get_snippet_by_id(snippet_id):
     item = Snippet.all.filter(
-        c.id == snippet_id).one().execute()
-    data = {"snippet" : item}
-    return render_template("snippet.html.jinja2", **data)
+        c.id == snippet_id).one(None).execute()
+    if item is not None:
+        data = {"snippet" : item}
+        return render_template("snippet.html.jinja2", **data)
+    else:
+        return "ERREUR ouaaaaah",404
 
 
 @app.route("/add", methods=["GET", "POST"])
@@ -116,7 +119,7 @@ def modify_snippet_post(id):
     return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
 
 
-@app.route('/connect', methods=['GET'])
+@app.route('/connect', methods=('GET',))
 def get_connect():
     return render_template('connect.html.jinja2')
 
@@ -139,7 +142,7 @@ def connect():
         return redirect(url_for("connect"))
 
 
-@app.route('/disconnect')
+@app.route('/disconnect', method=['GET'])
 def disconnect():
     session.pop('logged_in', None)
     flash('You are disconnected !')
@@ -153,7 +156,7 @@ def register():
         or '' == request.form.get('email', '') :
         return 'BAD'
     else:
-        Person.create({
+        person = Person.create({
             'login': request.form['login'], 
             'password': request.form['password'], 
             'email': request.form['email'],
