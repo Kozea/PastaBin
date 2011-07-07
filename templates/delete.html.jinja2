@@ -1,0 +1,17 @@
+{# extends "_layout.jinja2" #}
+{% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+{% endfor %}
+{% block content %}
+<h2>Delete a snippet</h2>
+<form action="{{ url_for("delete_snippet_post", id=snip_id) }}" method="post">
+	<fieldset>
+		<legend>Confirmation</legend>
+		<p>You really want to delete "<em>{{ snip_title }}</em>" ?</p>
+		<p>
+			<a href="{{ url_for("get_snippet_by_id", snippet_id=snip_id) }}">No, it's a mistake!</a>
+			<input type="submit" name="submite" value="Yes, delete it!" />
+		</p>
+	</fieldset>
+</form>
+{% endblock content %}
