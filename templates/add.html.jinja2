@@ -1,9 +1,5 @@
-{# extends "_layout.jinja2" #}
-{% for message in get_flashed_messages() %}
-    <div class=flash>{{ message }}</div>
-{% endfor %}
+{% extends "_layout.jinja2" %}
 {% block content %}
-<h2>Add a new snippet</h2>
 <form action="{{ url_for("add_snippet_post") }}" method="post">
 	<fieldset>
 		<legend>Informations</legend>
@@ -14,6 +10,6 @@
 		<legend>Text</legend>
 		<textarea name="snip_text" id="snip_text" rows="14" cols="80"></textarea>
 	</fieldset>
-	<input type="submit" name="submite" value="Pasta !" />
+	<input type="submit" name="submite" value="Pasta!" />
 </form>
 {% endblock content %}

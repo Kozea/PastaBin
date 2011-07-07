@@ -8,9 +8,12 @@
 {% if not session.login %}
 <a href="{{ url_for('connect') }}">log in</a>
 {% else %}
+<<<<<<< HEAD
 <a href="{{ url_for("disconnect") }}">log out</a>
 <a href="{{ url_for("account") }}">my account</a>
-<a href="{{ url_for("my_snippets", person_login = session.login) }}">my snippets - {{ session.login }}</a>
+<a href="{{ url_for("my_snippets", person_id = session.id) }}">my snippets - {{ session.login }}</a>
+
+
 {% endif %}
 
 <h4>Les plus récents</h4>

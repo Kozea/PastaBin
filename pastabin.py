@@ -37,6 +37,10 @@
 ###########################################################################
 
 
+__app_name__ = "PastaBin"
+__version__ = "0.1"
+
+
 from datetime import datetime
 
 from flask import *
@@ -47,15 +51,43 @@ from access_points import *
 
 
 app = Flask(__name__)
-#g.user_id = None
-#g.user_login = "Guest"
-#g.user_password = None
-#g.email = None
 
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 
-@app.route("/", methods=("GET",))
+def get_page_informations(title="Unknown", menu_active=None):
+    """Retun various informations like the menu, the page title,...
+
+    Arguments:
+        title -- The page title
+        menu_active -- The name of the current page
+    """
+    menu_items = [
+            {
+                'name': "index",
+                'title': "Home",
+                'url': url_for("index"),
+                'active': False,
+            },
+            {
+                'name': "add",
+                'title': "New snippet",
+                'url': url_for("add_snippet_get"),
+                'active': False,
+            },
+            ]
+    for item in menu_items:
+        if menu_active == item['name']:
+            item['active'] = True
+            break
+    return {
+            'menu': menu_items,
+            'title': title,
+            'appname': __app_name__,
+            }
+
+
+@app.route("/", methods=["GET"])
 def index():
     data =  {"snippets" : Snippet.all.execute()}
     return render_template("index.html.jinja2", **data)
@@ -70,7 +102,7 @@ def get_snippet_by_id(snippet_id):
         data = {"snippet" : item}
         return render_template("snippet.html.jinja2", **data)
     else:
-        return "ERREUR ouaaaaah",404
+        return "ERROR ouaaaaah", 404 #FIXME
 
 
 @app.route("/my_snippets/<string:person_login>/", methods=["GET"])
@@ -82,7 +114,13 @@ def my_snippets(person_login):
 
 @app.route("/add", methods=["GET"])
 def add_snippet_get():
-    return render_template("add.html.jinja2")
+    return render_template(
+            "add.html.jinja2",
+            page=get_page_informations(
+                title="Add a new Snippet",
+                menu_active="add"
+                ),
+            )
 
 
 @app.route("/add", methods=["POST"])
@@ -98,8 +136,8 @@ def add_snippet_post():
 
 
 @app.route("/modify/<int:id>", methods=["GET"])
-def modify_snippet_get(id):j
-    #if not session.get('logged_in'):
+
+def modify_snippet_get(id):
     if not session.get('login'):
         return redirect(url_for("connect"))
     item = Snippet.all.filter(c.id == id).one(None).execute()
@@ -112,12 +150,11 @@ def modify_snippet_get(id):j
                 snip_text=item['text'],
                 )
     else:
-        return "Groaaah!", 404
+        return "Groaaah!", 404 #FIXME
 
 
 @app.route("/modify/<int:id>", methods=["POST"])
 def modify_snippet_post(id):
-    #if not session.get('logged_in'):
     if not session.get('login'):
         return redirect(url_for("connect"))
     item = Snippet.all.filter(c.id == id).one(None).execute()
@@ -173,7 +210,7 @@ def connect():
             return redirect(url_for("connect"))
     if item['password'] == request.form['password']:
         session['login'] = request.form['login']
-        #session['logged_in'] = True
+        session['id'] = item['id']
         flash("Welcome %s !" % escape(session["login"]))
         return redirect("/") #FIXME
     else:
@@ -184,7 +221,6 @@ def connect():
 @app.route('/disconnect', methods=['GET'])
 def disconnect():
     session.pop('login', None)
-    #session.pop('logged_in', None)
     flash('You are disconnected !')
     return redirect("/") #FIXME
 
@@ -192,20 +228,25 @@ def disconnect():
 @app.route('/register', methods=['POST'])
 def register():
     if '' == request.form.get('login', '') \
-        or '' == request.form.get('password', '') \
+        or '' == request.form.get('password1', '') \
+        or '' == request.form.get('password2', '') \
         or '' == request.form.get('email', '') :
-        flash("Empty field")
+        flash("Some fields are empty !")
         return redirect(url_for("register"))
     else:
-        person = Person.create({
-            'login': request.form['login'], 
-            'password': request.form['password'], 
-            'email': request.form['email'],
-            }).save()
-        session['login'] = request.form['login']
-        #session['logged_in'] = True
-        flash("Welcome %s !" % escape(session["login"]))
-        return redirect("/") #FIXME
+        if request.form['password1'] != request.form['password2']:
+            flash("Passwords are not same !")
+            return redirect(url_for("register"))
+        else: 
+            person = Person.create({
+                'login': request.form['login'], 
+                'password': request.form['password2'], 
+                'email': request.form['email'],
+                }).save()
+            session['login'] = request.form['login']
+            session['id'] = item['id']
+            flash("Welcome %s !" % escape(session["login"]))
+            return redirect("/") #FIXME
 
 
 @app.route('/register', methods=['GET'])
@@ -213,14 +254,15 @@ def get_register():
     return render_template('register.html.jinja2')
 
 @app.route('/account', methods=['POST'])
-def account(id):
-    #if not session.get('logged_in'):
+def account():
     if not session.get('login'):
         return redirect(url_for("connect"))
-    item = Person.all.filter(c.id == id).one(None).execute()
+    item = Person.all.filter(c.login == session['login']).one(None).execute()
+    if request.form['password1'] != request.form['password2']:
+        flash("Passwords are not same !")
+        return redirect(url_for("account"))
     if item is not None:
-        item['login'] = request.form['login']
-        item['password'] = request.form['password']
+        item['password'] = request.form['password1']
         item['email'] = request.form['email']
         item.save()
     flash("Your account is been modify !")
@@ -228,7 +270,9 @@ def account(id):
 
 @app.route('/account', methods=['GET'])
 def get_account():
-    return render_template('account.html.jinja2')
+    item = Person.all.filter(c.login == session['login']).one(None).execute()
+    data = {"person" : item}
+    return render_template('account.html.jinja2', **data)
 
 
 if __name__ == '__main__':
