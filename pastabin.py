@@ -164,6 +164,7 @@ def connect():
             return redirect(url_for("connect"))
     if item['password'] == request.form['password']:
         session['login'] = request.form['login']
+        session['id'] = item['id']
         flash("Welcome %s !" % escape(session["login"]))
         return redirect("/") #FIXME
     else:
@@ -197,6 +198,7 @@ def register():
                 'email': request.form['email'],
                 }).save()
             session['login'] = request.form['login']
+            session['id'] = item['id']
             flash("Welcome %s !" % escape(session["login"]))
             return redirect("/") #FIXME
 

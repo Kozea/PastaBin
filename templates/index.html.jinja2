@@ -11,6 +11,7 @@
 <a href="{{ url_for('disconnect') }}">log out</a>
 <a href="{{ url_for('account') }}">my account</a>
 <a href="#">my snippets</a>
+{{session.id}} {{session.login}}
 {% endif %}
 
 <h4>Les plus récents</h4>
