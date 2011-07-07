@@ -96,6 +96,16 @@ def get_page_informations(title="Unknown", menu_active=None):
             }
 
 
+def get_user_id():
+    """Return the user id if logged, 0 else"""
+    return session.get("id", 0)
+
+
+def get_user_login():
+    """Return the user id if logged, 0 else"""
+    return session.get("login", "Guest")
+
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template(
@@ -147,13 +157,14 @@ def add_snippet_get():
 @app.route("/add", methods=["POST"])
 def add_snippet_post():
     item = Snippet.create({
-        'person_id': None, #FIXME 
+        'person': get_user_id(),
         'date': datetime.now(),
         'language': request.form['snip_language'],
         'title': request.form['snip_title'],
         'text': request.form['snip_text'],
-        }).save()
-    return redirect("/s/IDontKnow") #FIXME
+        })
+    item.save()
+    return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
 
 
 @app.route("/modify/<int:id>", methods=["GET"])
@@ -238,7 +249,7 @@ def connect():
         session['login'] = request.form['login']
         session['id'] = item['id']
         flash("Welcome %s !" % escape(session["login"]), "ok")
-        return redirect("/") #FIXME
+        return redirect(url_for("index"))
     else:
         flash("Invalid login or password !")
         return redirect(url_for("connect"))
@@ -248,7 +259,7 @@ def connect():
 def disconnect():
     session.pop('login', None)
     flash('You are disconnected !')
-    return redirect("/") #FIXME
+    return redirect(url_for("index"))
 
 
 @app.route('/register', methods=['GET'])
@@ -276,27 +287,31 @@ def register():
                 'login': request.form['login'], 
                 'password': request.form['password2'], 
                 'email': request.form['email'],
-                }).save()
+                })
+            person.save()
             session['login'] = request.form['login']
-            session['id'] = item['id']
+            session['id'] = person['id']
             flash("Welcome %s !" % escape(session["login"]))
-            return redirect("/") #FIXME
+            return redirect(url_for("index"))
 
 
 @app.route('/account', methods=['POST'])
 def account():
-    if not session.get('login'):
+    if not session.get("id"):
         return redirect(url_for("connect"))
-    item = Person.all.filter(c.login == session['login']).one(None).execute()
-    if request.form['password1'] != request.form['password2']:
+    item = Person.all.filter(c.id == session["id"]).one(None).execute()
+    if request.form["password1"] != request.form["password2"]:
         flash("Passwords are not same !")
         return redirect(url_for("account"))
     if item is not None:
-        item['password'] = request.form['password1']
-        item['email'] = request.form['email']
+        item["login"] = request.form["login"]
+        item["password"] = request.form["password1"]
+        item["email"] = request.form["email"]
         item.save()
-    flash("Your account is been modify !")
-    return redirect("/") #FIXME
+        session["login"] = request.form["login"]
+        flash("Your account is been modify !")
+    return redirect(url_for("index"))
+
 
 
 @app.route('/account', methods=['GET'])

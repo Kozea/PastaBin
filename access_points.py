@@ -41,7 +41,7 @@ from datetime import datetime
 
 from multicorn import Multicorn
 from multicorn.corns.alchemy import Alchemy
-from multicorn.declarative import declare, Property
+from multicorn.declarative import declare, Property, Relation
 from multicorn.requests import CONTEXT as c
 from multicorn.corns.extensers.computed import ComputedExtenser
 
@@ -49,31 +49,24 @@ from multicorn.corns.extensers.computed import ComputedExtenser
 mc = Multicorn()
 
 
-@mc.register #FIXME
+@mc.register
 @declare(Alchemy, identity_properties=("id",), url="sqlite:///pastabin.db")
-class Person(object): #FIXME RawPerson
+class Person(object):
     id = Property(type=int)
     login = Property(type=unicode)
     password = Property(type=unicode)
     email = Property(type=unicode)
 
 
-@mc.register #FIXME
+@mc.register
 @declare(Alchemy, identity_properties=("id",), url="sqlite:///pastabin.db")
-class Snippet(object): #FIXME RawSnippet
+class Snippet(object):
     id = Property(type=int)
-    person_id = Property(type=int)
+    person = Relation(Person)
     date = Property(type=datetime)
     language = Property(type=unicode)
     title = Property(type=unicode)
     text = Property(type=unicode)
-
-
-#FIXME
-#Person = ComputedExtenser("Person", RawPerson)
-#Snippet = ComputedExtenser("Snippet", RawSnippet)
-#Person.register("snippets", Snippet.all.filter(c(-1).id == c.person_id))
-#Snippet.register("person", Person.all.filter(c(-1).person_id == c.id))
 
 
 if __name__ == "__main__":
@@ -82,8 +75,9 @@ if __name__ == "__main__":
         'password': "azerty",
         'email': "totoro@gibli.com",
         }).save()
+
     Snippet.create({
-        'person_id': 1,
+        'person': 1,
         'date': datetime(1988, 1, 1),
         'language': "assembly",
         'title': "hello.asm",
