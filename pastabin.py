@@ -100,7 +100,7 @@ def get_user_id():
 
 
 def get_user_login():
-    """Return the user id if logged, 0 else"""
+    """Return the user login if logged, Guest else"""
     return session.get("login", "Guest")
 
 
@@ -243,7 +243,7 @@ def connect():
             flash("Empty field !")
             return redirect(url_for("connect"))
     if item['password'] == request.form['password']:
-        session['login'] = request.form['login']
+        session['login'] = item['login']
         session['id'] = item['id']
         flash("Welcome %s !" % escape(session["login"]), "ok")
         return redirect(url_for("index"))
@@ -275,21 +275,19 @@ def register():
         or '' == request.form.get('email', '') :
         flash("Some fields are empty !")
         return redirect(url_for("register"))
-    else:
-        if request.form['password1'] != request.form['password2']:
-            flash("Passwords are not same !")
-            return redirect(url_for("register"))
-        else: 
-            person = Person.create({
-                'login': request.form['login'], 
-                'password': request.form['password2'], 
-                'email': request.form['email'],
-                })
-            person.save()
-            session['login'] = request.form['login']
-            session['id'] = person['id']
-            flash("Welcome %s !" % escape(session["login"]))
-            return redirect(url_for("index"))
+    if request.form['password1'] != request.form['password2']:
+        flash("Passwords are not same !")
+        return redirect(url_for("register"))
+    person = Person.create({
+        'login': request.form['login'], 
+        'password': request.form['password2'], 
+        'email': request.form['email'],
+        })
+    person.save()
+    session['login'] = person['login']
+    session['id'] = person['id']
+    flash("Welcome %s !" % escape(session["login"]), "ok")
+    return redirect(url_for("index"))
 
 
 @app.route('/account', methods=['POST'])
