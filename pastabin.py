@@ -120,6 +120,12 @@ def get_user_login():
     return session.get("login", "Guest")
 
 
+def ckeck_rights(id):
+    if id == get_user_id() and id != 0:
+        return True
+    return False
+
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template(
@@ -164,7 +170,8 @@ def get_snippet_by_id(snippet_id):
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-
+    if not ckeck_rights(get_user_id()):
+        return abort(403)
     item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
     if item is not None:
         return render_template(
@@ -205,8 +212,8 @@ def add_snippet_post():
 
 @app.route("/modify/<int:id>", methods=["GET"])
 def modify_snippet_get(id):
-    if not session.get('login'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -224,8 +231,8 @@ def modify_snippet_get(id):
 
 @app.route("/modify/<int:id>", methods=["POST"])
 def modify_snippet_post(id):
-    if not session.get('login'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         item['date'] = datetime.now()
@@ -238,8 +245,8 @@ def modify_snippet_post(id):
 
 @app.route("/delete/<int:id>", methods=["GET"])
 def delete_snippet_get(id):
-    if not session.get('logged_in'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -254,8 +261,8 @@ def delete_snippet_get(id):
 
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete_snippet_post(id):
-    if not session.get('logged_in'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         item.delete()
@@ -365,4 +372,3 @@ if __name__ == '__main__':
     def pretty_datetime(d):
         return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
     app.run(debug=True)
-
