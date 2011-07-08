@@ -42,6 +42,8 @@ __version__ = "0.1"
 
 
 from datetime import datetime
+from hashlib import sha256
+
 from flask import *
 from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
@@ -52,6 +54,7 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.lexers import guess_lexer
 from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, Number
+
 from access_points import *
 
 
@@ -138,7 +141,7 @@ def get_user_id():
 
 def ckeck_rights(snippet_id):
     item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
-    if item is not None:
+    if item is not None and item['person'] is not None:
         if item["person"]["id"] == get_user_id() and get_user_id() != 0:
             return True
     return False
@@ -148,7 +151,7 @@ def ckeck_rights(snippet_id):
 def index():
     return render_template(
             "index.html.jinja2",
-            snippets=Snippet.all.sort(-c.date)[:10].execute(),
+            snippets=list(Snippet.all.sort(-c.date)[:10].execute()),
             page=get_page_informations(title="Home"),
             )
 
@@ -187,13 +190,13 @@ def get_snippet_by_id(snippet_id):
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-    if not ckeck_rights(get_user_id()):
+    if get_user_id() <= 0:
         return abort(403)
     item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
     if item is not None:
         return render_template(
                 "my_snippets.html.jinja2",
-                snippets=item,
+                snippets=list(item),
                 page=get_page_informations(
                     title="My snippets",
                     menu_active="my_snippets",
@@ -324,11 +327,14 @@ def connect():
             or '' == request.form.get('password', ''):
                 flash("Invalid login or password !", "error")
                 return redirect(url_for("connect"))
-        if item['password'] == request.form['password']:
+        if item['password'] == sha256(request.form['password']).hexdigest():
             session['login'] = item['login']
             session['id'] = item['id']
             flash("Welcome %s !" % escape(session["login"]), "ok")
             return redirect(url_for("index"))
+        else:
+            flash("Invalid login or password !", "error")
+            return redirect(url_for("connect"))
     else:
         flash("Invalid login or password !", "error")
         return redirect(url_for("connect"))
@@ -374,7 +380,7 @@ def register():
     else:
         person = Person.create({
             'login': request.form['login'],
-            'password': request.form['password2'],
+            'password': sha256(request.form['password2']).hexdigest(),
             'email': request.form['email'],
             })
         person.save()
@@ -408,7 +414,7 @@ def account():
                 return get_account(def_login=request.form.get('login'),
                         def_email=request.form.get('email'))
             else:
-                item["password"] = request.form["password1"]
+                item["password"] = sha256(request.form['password1']).hexdigest()
         item.save()
         session["login"] = request.form["login"]
         flash("Your account is been modify !", "ok")
@@ -431,3 +437,5 @@ def get_account(def_login='', def_email=''):
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
+
+
