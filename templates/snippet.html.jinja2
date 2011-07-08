@@ -11,7 +11,7 @@
 {% endif %}
 
 <p>By {{ snippet.person.login }} on {{ snippet.date | date_format}}</p>
-{{ snippet.text }}
+{{ snippet.text | safe }}
 
 {% if session.id  %}
 <ul>
