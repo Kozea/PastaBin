@@ -6,7 +6,7 @@
     <label for="login">Login:</label> <input type="text" name="login" id="login" value="{{ person.login }}" />
     <label for="password1">Password:</label> <input type="password" name="password1" id="password1" value="{{ person.password }}" />
     <label for="password2">Password (verification):</label> <input type="password" name="password2" id="password2" value="{{ person.password }}" />
-    <label for="email">Email:</label> <input type="text" name="email" id="email" value="{{ person.email }}" />
+   <label for="email">Email:</label> <input type="email" placeholder="me@example.com" name="email" id="email" value="{{ person.email }}" />
   </fieldset>
   <div class="btn">
     <a href="{{ url_for("index") }}">Cancel</a>
