@@ -84,6 +84,14 @@ def snip_user(user):
         return user
 
 
+@app.template_filter("check_title")
+def check_title(title):
+    if title == '':
+        return 'Unamed snippet'
+    else:
+        return title
+
+
 def get_page_informations(title="Unknown", menu_active=None):
     """Retun various informations like the menu, the page title,...
 
@@ -118,7 +126,7 @@ def get_page_informations(title="Unknown", menu_active=None):
             break
     return {
             'menu': menu_items,
-            'title': title,
+            'title': check_title(title),
             'appname': __app_name__,
             }
 
