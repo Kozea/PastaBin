@@ -43,6 +43,6 @@ from setuptools import setup, find_packages
 setup(
     name="Pastabin",
     packages=find_packages(),
-    install_requires=["Flask", "Multicorn"],
+    install_requires=["Flask", "Multicorn", "Pygments"],
     )
 
