@@ -360,18 +360,25 @@ def register():
         flash("Some fields are empty !", "error")
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
+
     if request.form['password1'] != request.form['password2']:
         flash("Passwords are not same !", "error")
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
-    person = Person.create({
-        'login': request.form['login'],
-        'password': request.form['password2'],
-        'email': request.form['email'],
-        })
-    person.save()
-    session['login'] = person['login']
-    session['id'] = person['id']
+    item = Person.all.filter(c.login.lower() == \
+        request.form['login'].lower()).one(None).execute()
+    if item is not None:
+        flash("Your login already exists !", "error")
+        return get_register(def_login='', def_email=request.form.get('email'))
+    else:
+        person = Person.create({
+            'login': request.form['login'],
+            'password': request.form['password2'],
+            'email': request.form['email'],
+            })
+        person.save()
+        session['login'] = person['login']
+        session['id'] = person['id']
     flash("Welcome %s !" % escape(session["login"]), "ok")
     return redirect(url_for("index"))
 
@@ -385,7 +392,12 @@ def account():
         flash("Some fields are empty !", "error")
         return get_account(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
+    person = Person.all.filter(c.login.lower() == \
+        request.form['login'].lower()).one(None).execute()
     item = Person.all.filter(c.id == session["id"]).one(None).execute()
+    if person is not None and person['login'] != item['login']:
+        flash("Your login already exists !", "error")
+        return get_account(def_login='', def_email=request.form.get('email'))
     if item is not None:
         item["login"] = request.form["login"]
         item["email"] = request.form["email"]
