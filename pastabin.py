@@ -56,6 +56,7 @@ from access_points import *
 
 
 app = Flask(__name__)
+app.jinja_env.autoescape = True
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 
@@ -373,5 +374,5 @@ def get_account():
 
 if __name__ == '__main__':
 #    app.run()
-    
     app.run(debug=True)
+
