@@ -138,7 +138,7 @@ def get_user_id():
 
 def ckeck_rights(snippet_id):
     item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
-    if item is not None:
+    if item is not None and item['person'] is not None:
         if item["person"]["id"] == get_user_id() and get_user_id() != 0:
             return True
     return False
@@ -402,3 +402,5 @@ def get_account():
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
+
+

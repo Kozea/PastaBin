@@ -69,19 +69,3 @@ class Snippet(object):
     text = Property(type=unicode)
 
 
-if __name__ == "__main__":
-    Person.create({
-        'login': "Totoro",
-        'password': "azerty",
-        'email': "totoro@gibli.com",
-        }).save()
-
-    Snippet.create({
-        'person': 1,
-        'date': datetime(1988, 1, 1),
-        'language': "assembly",
-        'title': "hello.asm",
-        'text': "org 100h\n\nmov ah, 09h\nmov dx, offset msg\nint 21h\n\nmov ah, 4Ch\nint 21h\n\nmsg db \"Groaaah!\"",
-        }).save()
-
-
