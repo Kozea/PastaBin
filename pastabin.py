@@ -128,8 +128,9 @@ def get_user_id():
     return session.get("id", 0)
 
 
-def ckeck_rights(id):
-    if id == get_user_id() and id != 0:
+def ckeck_rights(snippet_id):
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
+    if item["person"]["id"] == get_user_id() and get_user_id() != 0:
         return True
     return False
 
@@ -172,7 +173,6 @@ def get_snippet_by_id(snippet_id):
                 page=get_page_informations(title=item['title']),
                 )
     else:
-        flash("Invalid !")
         return abort(404)
 
 
@@ -318,7 +318,7 @@ def disconnect():
 @app.route('/register', methods=['GET'])
 def get_register():
     return render_template(
-            'register.html.jinja2',
+            'account.html.jinja2',
             page=get_page_informations(title="Register"),
             )
 
