@@ -56,7 +56,10 @@ from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, Number
 
 from access_points import *
-
+from utils.mail import SmtpAgent
+from jinja2.utils import Markup
+import random
+import string
 
 app = Flask(__name__)
 app.jinja_env.autoescape = True
@@ -73,7 +76,12 @@ class PygmentsStyle(Style):
         Error: '#dc322f',
         Number: '#859900'}
 
-
+@app.before_request
+def constants():
+    """ Global context constant injector."""
+    g.smtp_agent = SmtpAgent()
+    
+    
 @app.template_filter("date_format")
 def pretty_datetime(d):
     return d.strftime("%A %d %B %Y @ %H:%M:%S").decode('utf-8')
@@ -432,6 +440,35 @@ def get_account(def_login='', def_email=''):
             page=get_page_informations(title="Manage my account"),
             person=item
             )
+
+@app.route('/forgotten_password', methods=['GET'])
+def forgotten_password_get():
+    return render_template(
+            'forgotten_password.html.jinja2',
+            page=get_page_informations(title="Forgotten Password"),
+            )
+
+
+@app.route('/forgotten_password', methods=['POST'])
+def forgotten_password_post():
+    password = get_random_password()
+    item = Person.all.filter(c.login.lower() == request.form["login"].lower()).one(None).execute()
+    if item is not None:
+        item['password'] = sha256(password).hexdigest()
+        item.save()
+        message = u"your new password is: %s" % password
+        subject = u"Forgotten Password"
+        g.smtp_agent.sendmail_alternative(message, subject, item['email'])
+        flash("A mail was sent to : %s" % item['email'])
+        return redirect(url_for("connect"))
+    else:
+        flash("This login does not exist")
+        return forgotten_password_get()
+
+
+def get_random_password():
+    """Get an random 8-character password."""
+    return ''.join(random.sample(string.ascii_lowercase, 8))
 
 
 if __name__ == '__main__':
