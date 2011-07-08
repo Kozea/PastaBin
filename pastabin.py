@@ -70,6 +70,19 @@ class PygmentsStyle(Style):
         Number: '#859900'}
 
 
+@app.template_filter("date_format")
+def pretty_datetime(d):
+    return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
+
+
+@app.template_filter("snip_user")
+def snip_user(user):
+    if type(user) != unicode:
+        return 'Guest'
+    else:
+        return user
+
+
 def get_page_informations(title="Unknown", menu_active=None):
     """Retun various informations like the menu, the page title,...
 
@@ -360,7 +373,5 @@ def get_account():
 
 if __name__ == '__main__':
 #    app.run()
-    @app.template_filter("date_format")
-    def pretty_datetime(d):
-        return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
+    
     app.run(debug=True)
