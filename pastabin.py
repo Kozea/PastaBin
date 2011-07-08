@@ -188,27 +188,40 @@ def my_snippets():
 
 
 @app.route("/add", methods=["GET"])
-def add_snippet_get():
+def add_snippet_get(def_title="", def_lng="", def_txt=""):
     return render_template(
-            "add.html.jinja2",
+            "edit_snippet.html.jinja2",
+            snip_title=def_title,
+            snip_language=def_lng,
+            snip_text=def_txt,
+            action=url_for("add_snippet_post"),
+            cancel=url_for("index"),
             page=get_page_informations(
                 title="Add a new Snippet",
-                menu_active="add"
+                menu_active="add",
                 ),
             )
 
 
 @app.route("/add", methods=["POST"])
 def add_snippet_post():
-    item = Snippet.create({
-        'person': get_user_id(),
-        'date': datetime.now(),
-        'language': request.form['snip_language'],
-        'title': request.form['snip_title'],
-        'text': request.form['snip_text'],
-        })
-    item.save()
-    return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
+    if len(request.form['snip_text']) > 0:
+        item = Snippet.create({
+            'person': get_user_id(),
+            'date': datetime.now(),
+            'language': request.form['snip_language'],
+            'title': request.form['snip_title'],
+            'text': request.form['snip_text'],
+            })
+        item.save()
+        return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
+    else:
+        flash("The text field is empty...", "error")
+        return add_snippet_get(
+                request.form['snip_title'],
+                request.form['snip_language'],
+                request.form['snip_text'],
+                )
 
 
 @app.route("/modify/<int:id>", methods=["GET"])
@@ -218,11 +231,12 @@ def modify_snippet_get(id):
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
-                "modify.html.jinja2",
-                snip_id=item['id'],
+                "edit_snippet.html.jinja2",
                 snip_title=item['title'],
                 snip_language=item['language'],
                 snip_text=item['text'],
+                action=url_for("modify_snippet_post", id=id),
+                cancel=url_for("get_snippet_by_id", snippet_id=id),
                 page=get_page_informations(
                     title="Modify a snippet (%s)" % item['title'])
                 )
@@ -235,12 +249,14 @@ def modify_snippet_post(id):
     if not session.get('login'):
         return redirect(url_for("connect"))
     item = Snippet.all.filter(c.id == id).one(None).execute()
-    if item is not None:
+    if item is not None and len(request.form['snip_text']) > 0:
         item['date'] = datetime.now()
         item['language'] = request.form['snip_language']
         item['title'] = request.form['snip_title']
         item['text'] = request.form['snip_text']
         item.save()
+    else:
+        flash("Error when modifying the snippet", "error")
     return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
 
 
