@@ -84,6 +84,14 @@ def snip_user(user):
         return user
 
 
+@app.template_filter("check_title")
+def check_title(title):
+    if title == '':
+        return 'Unamed snippet'
+    else:
+        return title
+
+
 def get_page_informations(title="Unknown", menu_active=None):
     """Retun various informations like the menu, the page title,...
 
@@ -118,7 +126,7 @@ def get_page_informations(title="Unknown", menu_active=None):
             break
     return {
             'menu': menu_items,
-            'title': title,
+            'title': check_title(title),
             'appname': __app_name__,
             }
 
@@ -126,6 +134,14 @@ def get_page_informations(title="Unknown", menu_active=None):
 def get_user_id():
     """Return the user id if logged, 0 else"""
     return session.get("id", 0)
+
+
+def ckeck_rights(snippet_id):
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
+    if item is not None:
+        if item["person"]["id"] == get_user_id() and get_user_id() != 0:
+            return True
+    return False
 
 
 @app.route("/", methods=["GET"])
@@ -166,13 +182,13 @@ def get_snippet_by_id(snippet_id):
                 page=get_page_informations(title=item['title']),
                 )
     else:
-        flash("Invalid !")
         return abort(404)
 
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-
+    if not ckeck_rights(get_user_id()):
+        return abort(403)
     item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
     if item is not None:
         return render_template(
@@ -226,8 +242,8 @@ def add_snippet_post():
 
 @app.route("/modify/<int:id>", methods=["GET"])
 def modify_snippet_get(id):
-    if not session.get('login'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -246,8 +262,8 @@ def modify_snippet_get(id):
 
 @app.route("/modify/<int:id>", methods=["POST"])
 def modify_snippet_post(id):
-    if not session.get('login'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None and len(request.form['snip_text']) > 0:
         item['date'] = datetime.now()
@@ -262,8 +278,8 @@ def modify_snippet_post(id):
 
 @app.route("/delete/<int:id>", methods=["GET"])
 def delete_snippet_get(id):
-    if not session.get('logged_in'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -278,8 +294,8 @@ def delete_snippet_get(id):
 
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete_snippet_post(id):
-    if not session.get('logged_in'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         item.delete()
@@ -304,7 +320,7 @@ def connect():
     if item is not None:
         if '' == request.form.get('login', '') \
             or '' == request.form.get('password', ''):
-                flash("Empty field !")
+                flash("Empty field !", "error")
                 return redirect(url_for("connect"))
         if item['password'] == request.form['password']:
             session['login'] = item['login']
@@ -312,7 +328,7 @@ def connect():
             flash("Welcome %s !" % escape(session["login"]), "ok")
             return redirect(url_for("index"))
     else:
-        flash("Invalid login or password !")
+        flash("Invalid login or password !", "error")
         return redirect(url_for("connect"))
 
 
@@ -320,14 +336,14 @@ def connect():
 def disconnect():
     session['login'] = None
     session['id'] = None
-    flash('You are disconnected !')
+    flash('You are disconnected !', "ok")
     return redirect(url_for("index"))
 
 
 @app.route('/register', methods=['GET'])
 def get_register():
     return render_template(
-            'register.html.jinja2',
+            'account.html.jinja2',
             page=get_page_informations(title="Register"),
             )
 
@@ -338,10 +354,10 @@ def register():
         or '' == request.form.get('password1', '') \
         or '' == request.form.get('password2', '') \
         or '' == request.form.get('email', '') :
-        flash("Some fields are empty !")
+        flash("Some fields are empty !", "error")
         return redirect(url_for("register"))
     if request.form['password1'] != request.form['password2']:
-        flash("Passwords are not same !")
+        flash("Passwords are not same !", "error")
         return redirect(url_for("register"))
     person = Person.create({
         'login': request.form['login'],
@@ -361,7 +377,7 @@ def account():
         return redirect(url_for("connect"))
     item = Person.all.filter(c.id == session["id"]).one(None).execute()
     if request.form["password1"] != request.form["password2"]:
-        flash("Passwords are not same !")
+        flash("Passwords are not same !", "error")
         return redirect(url_for("account"))
     if item is not None:
         item["login"] = request.form["login"]
@@ -369,7 +385,7 @@ def account():
         item["email"] = request.form["email"]
         item.save()
         session["login"] = request.form["login"]
-        flash("Your account is been modify !")
+        flash("Your account is been modify !", "ok")
     return redirect(url_for("index"))
 
 
@@ -386,4 +402,3 @@ def get_account():
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
-
