@@ -128,11 +128,6 @@ def get_user_id():
     return session.get("id", 0)
 
 
-def get_user_login():
-    """Return the user login if logged, Guest else"""
-    return session.get("login", "Guest")
-
-
 @app.route("/", methods=["GET"])
 def index():
     return render_template(
@@ -172,7 +167,7 @@ def get_snippet_by_id(snippet_id):
                 )
     else:
         flash("Invalid !")
-        return "ERROR ouaaaaah", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/my_snippets", methods=["GET"])
@@ -189,7 +184,7 @@ def my_snippets():
                     ),
                 )
     else:
-        return "ERROR ouaaaaah", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/add", methods=["GET"])
@@ -232,7 +227,7 @@ def modify_snippet_get(id):
                     title="Modify a snippet (%s)" % item['title'])
                 )
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/modify/<int:id>", methods=["POST"])
@@ -262,7 +257,7 @@ def delete_snippet_get(id):
                 page=get_page_informations(title="Delete a snippet"),
                 )
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/delete/<int:id>", methods=["POST"])
@@ -274,7 +269,7 @@ def delete_snippet_post(id):
         item.delete()
         return redirect(url_for("index"))
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route('/connect', methods=('GET',))
