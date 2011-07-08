@@ -56,6 +56,7 @@ from access_points import *
 
 
 app = Flask(__name__)
+app.jinja_env.autoescape = True
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 
@@ -363,3 +364,4 @@ if __name__ == '__main__':
     def pretty_datetime(d):
         return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
     app.run(debug=True)
+
