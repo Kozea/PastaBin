@@ -13,9 +13,13 @@ elit. Pellentesque habitant morbi tristique senectus et netus et
 malesuada fames ac turpis egestas.</p>
 
 <h3>Last snippets</h3>
-<ul class="index">
-{% for snippet in snippets %}
-<li><a href="{{ url_for("get_snippet_by_id", snippet_id=snippet.id)}}" >{{ snippet.title |check_title}} <span>(posted by {{ snippet.person.login | snip_user }}, on {{ snippet.date | date_format }})</span></a></li>
-{% endfor %}
-</ul>
+{% if snippets %}
+	<ul class="index">
+	{% for snippet in snippets %}
+		<li><a href="{{ url_for("get_snippet_by_id", snippet_id=snippet.id)}}" >{{ snippet.title |check_title}} <span>(posted by {{ snippet.person.login | snip_user }}, on {{ snippet.date | date_format }})</span></a></li>
+	{% endfor %}
+    </ul>
+{% else %}
+	<p class="warning">There is no snippet yet !</p>
+{% endif %}
 {% endblock content %}

@@ -148,7 +148,7 @@ def ckeck_rights(snippet_id):
 def index():
     return render_template(
             "index.html.jinja2",
-            snippets=Snippet.all.sort(-c.date)[:10].execute(),
+            snippets=list(Snippet.all.sort(-c.date)[:10].execute()),
             page=get_page_informations(title="Home"),
             )
 
@@ -187,13 +187,13 @@ def get_snippet_by_id(snippet_id):
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-    if not ckeck_rights(get_user_id()):
+    if get_user_id() <= 0:
         return abort(403)
     item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
     if item is not None:
         return render_template(
                 "my_snippets.html.jinja2",
-                snippets=item,
+                snippets=list(item),
                 page=get_page_informations(
                     title="My snippets",
                     menu_active="my_snippets",
