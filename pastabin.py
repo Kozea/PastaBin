@@ -42,7 +42,6 @@ __version__ = "0.1"
 
 
 from datetime import datetime
-
 from flask import *
 from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
@@ -53,14 +52,10 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.lexers import guess_lexer
 from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, Number
-
-
-
 from access_points import *
 
 
 app = Flask(__name__)
-
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 
@@ -131,7 +126,6 @@ def index():
             snippets=Snippet.all.sort(-c.date)[:10].execute(),
             page=get_page_informations(title="Home"),
             )
-
 
 
 @app.route("/snippet/<int:snippet_id>", methods=["GET"])
@@ -281,15 +275,16 @@ def connect():
     item = Person.all.filter(
         c.login.lower() == request.form['login'].lower()).one(None)
     item = item.execute()
-    if '' == request.form.get('login', '') \
-        or '' == request.form.get('password', ''):
-            flash("Empty field !")
-            return redirect(url_for("connect"))
-    if item['password'] == request.form['password']:
-        session['login'] = item['login']
-        session['id'] = item['id']
-        flash("Welcome %s !" % escape(session["login"]), "ok")
-        return redirect(url_for("index"))
+    if item is not None:
+        if '' == request.form.get('login', '') \
+            or '' == request.form.get('password', ''):
+                flash("Empty field !")
+                return redirect(url_for("connect"))
+        if item['password'] == request.form['password']:
+            session['login'] = item['login']
+            session['id'] = item['id']
+            flash("Welcome %s !" % escape(session["login"]), "ok")
+            return redirect(url_for("index"))
     else:
         flash("Invalid login or password !")
         return redirect(url_for("connect"))
@@ -297,7 +292,8 @@ def connect():
 
 @app.route('/disconnect', methods=['GET'])
 def disconnect():
-    session.pop('login', None)
+    session['login'] = None
+    session['id'] = None
     flash('You are disconnected !')
     return redirect(url_for("index"))
 
@@ -322,8 +318,8 @@ def register():
         flash("Passwords are not same !")
         return redirect(url_for("register"))
     person = Person.create({
-        'login': request.form['login'], 
-        'password': request.form['password2'], 
+        'login': request.form['login'],
+        'password': request.form['password2'],
         'email': request.form['email'],
         })
     person.save()
@@ -351,7 +347,6 @@ def account():
     return redirect(url_for("index"))
 
 
-
 @app.route('/account', methods=['GET'])
 def get_account():
     item = Person.all.filter(c.id == get_user_id()).one(None).execute()
@@ -362,12 +357,9 @@ def get_account():
             )
 
 
-
-
 if __name__ == '__main__':
 #    app.run()
     @app.template_filter("date_format")
     def pretty_datetime(d):
         return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
     app.run(debug=True)
-
