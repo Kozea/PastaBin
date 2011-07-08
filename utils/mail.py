@@ -16,8 +16,7 @@ Admin Pastabin
 # MAIL
 PORT_MAIL = 25
 SERVER_MAIL = "smtp.free.fr"
-SUPPORT_ADDRESS = 'support@pharminfo.fr'
-#REPLACEMENT_ADDRESS = 'amardine.david@gmail.com'
+SUPPORT_ADDRESS = 'no-reply@pastabin.org'
 
 
 class SmtpAgent(object):
@@ -27,9 +26,6 @@ class SmtpAgent(object):
     def sendmail(self, recipient, msg, from_field=None):
         if from_field is None:
             from_field = SUPPORT_ADDRESS
-#        if current_app.config['DEBUG']:
-        # replace adresse in test application
-#            recipient = REPLACEMENT_ADDRESS
         self.agent.sendmail(from_field, recipient, msg)
 
     @property

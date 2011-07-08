@@ -43,6 +43,8 @@ __version__ = "0.1"
 
 from datetime import datetime
 from hashlib import sha256
+import random
+import string
 
 from flask import *
 from multicorn.declarative import declare, Property
@@ -58,8 +60,6 @@ from pygments.token import Keyword, Name, Comment, String, Error, Number
 from access_points import *
 from utils.mail import SmtpAgent
 from jinja2.utils import Markup
-import random
-import string
 
 app = Flask(__name__)
 app.jinja_env.autoescape = True
@@ -441,15 +441,15 @@ def get_account(def_login='', def_email=''):
             person=item
             )
 
-@app.route('/forgotten_password', methods=['GET'])
+@app.route('/password', methods=['GET'])
 def forgotten_password_get():
     return render_template(
             'forgotten_password.html.jinja2',
-            page=get_page_informations(title="Forgotten Password"),
+            page=get_page_informations(title="Forgot your password ?"),
             )
 
 
-@app.route('/forgotten_password', methods=['POST'])
+@app.route('/password', methods=['POST'])
 def forgotten_password_post():
     password = get_random_password()
     item = Person.all.filter(c.login.lower() == request.form["login"].lower()).one(None).execute()
@@ -459,10 +459,10 @@ def forgotten_password_post():
         message = u"your new password is: %s" % password
         subject = u"Forgotten Password"
         g.smtp_agent.sendmail_alternative(message, subject, item['email'])
-        flash("A mail was sent to : %s" % item['email'])
+        flash("A mail was sent to : %s" % item['email'], "ok")
         return redirect(url_for("connect"))
     else:
-        flash("This login does not exist")
+        flash("This login does not exist", "error")
         return forgotten_password_get()
 
 
