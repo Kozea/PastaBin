@@ -452,14 +452,18 @@ def forgotten_password_get():
 @app.route('/forgotten_password', methods=['POST'])
 def forgotten_password_post():
     password = get_random_password()
-    item = Person.all.filter(c.login == request.form["login"]).one(None).execute()
-    item['password'] = sha256(password).hexdigest()
-    item.save()
-    message = u"your new password is: %s" % password
-    subject = u"Forgotten Password"
-    g.smtp_agent.sendmail_alternative(message, subject, item['email'])
-    flash("A mail was sent to : %s" % item['email'])
-    return redirect(url_for("connect"))
+    item = Person.all.filter(c.login.lower() == request.form["login"].lower()).one(None).execute()
+    if item is not None:
+        item['password'] = sha256(password).hexdigest()
+        item.save()
+        message = u"your new password is: %s" % password
+        subject = u"Forgotten Password"
+        g.smtp_agent.sendmail_alternative(message, subject, item['email'])
+        flash("A mail was sent to : %s" % item['email'])
+        return redirect(url_for("connect"))
+    else:
+        flash("This login does not exist")
+        return forgotten_password_get()
 
 
 def get_random_password():
