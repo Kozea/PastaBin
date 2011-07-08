@@ -163,6 +163,7 @@ def get_snippet_by_id(snippet_id):
                 page=get_page_informations(title=item['title']),
                 )
     else:
+        flash("Invalid !")
         return "ERROR ouaaaaah", 404 #FIXME
 
 
