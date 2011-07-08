@@ -320,7 +320,7 @@ def connect():
     if item is not None:
         if '' == request.form.get('login', '') \
             or '' == request.form.get('password', ''):
-                flash("Empty field !", "error")
+                flash("Invalid login or password !", "error")
                 return redirect(url_for("connect"))
         if item['password'] == request.form['password']:
             session['login'] = item['login']
@@ -341,9 +341,12 @@ def disconnect():
 
 
 @app.route('/register', methods=['GET'])
-def get_register():
+def get_register(def_login='', def_email=''):
     return render_template(
             'account.html.jinja2',
+            action=url_for("register"),
+            login=def_login,
+            email=def_email,
             page=get_page_informations(title="Register"),
             )
 
@@ -355,10 +358,12 @@ def register():
         or '' == request.form.get('password2', '') \
         or '' == request.form.get('email', '') :
         flash("Some fields are empty !", "error")
-        return redirect(url_for("register"))
+        return get_register(def_login=request.form.get('login'),
+                def_email=request.form.get('email'))
     if request.form['password1'] != request.form['password2']:
         flash("Passwords are not same !", "error")
-        return redirect(url_for("register"))
+        return get_register(def_login=request.form.get('login'),
+                def_email=request.form.get('email'))
     person = Person.create({
         'login': request.form['login'],
         'password': request.form['password2'],
@@ -375,14 +380,22 @@ def register():
 def account():
     if not session.get("id"):
         return redirect(url_for("connect"))
+    if '' == request.form.get('login', '') \
+        or '' == request.form.get('email', ''):
+        flash("Some fields are empty !", "error")
+        return get_account(def_login=request.form.get('login'),
+                def_email=request.form.get('email'))
     item = Person.all.filter(c.id == session["id"]).one(None).execute()
-    if request.form["password1"] != request.form["password2"]:
-        flash("Passwords are not same !", "error")
-        return redirect(url_for("account"))
     if item is not None:
         item["login"] = request.form["login"]
-        item["password"] = request.form["password1"]
         item["email"] = request.form["email"]
+        if request.form["password1"] or request.form["password2"] :
+            if request.form["password1"] != request.form["password2"]:
+                flash("Passwords are not same !", "error")
+                return get_account(def_login=request.form.get('login'),
+                        def_email=request.form.get('email'))
+            else:
+                item["password"] = request.form["password1"]
         item.save()
         session["login"] = request.form["login"]
         flash("Your account is been modify !", "ok")
@@ -390,10 +403,13 @@ def account():
 
 
 @app.route('/account', methods=['GET'])
-def get_account():
+def get_account(def_login='', def_email=''):
     item = Person.all.filter(c.id == get_user_id()).one(None).execute()
     return render_template(
             'account.html.jinja2',
+            action=url_for("account"),
+            login=item['login'],
+            email=item['email'],
             page=get_page_informations(title="Manage my account"),
             person=item
             )
