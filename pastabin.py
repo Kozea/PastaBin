@@ -136,9 +136,10 @@ def get_user_id():
     return session.get("id", 0)
 
 
-def get_user_login():
-    """Return the user login if logged, Guest else"""
-    return session.get("login", "Guest")
+def ckeck_rights(id):
+    if id == get_user_id() and id != 0:
+        return True
+    return False
 
 
 @app.route("/", methods=["GET"])
@@ -180,12 +181,13 @@ def get_snippet_by_id(snippet_id):
                 )
     else:
         flash("Invalid !")
-        return "ERROR ouaaaaah", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-
+    if not ckeck_rights(get_user_id()):
+        return abort(403)
     item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
     if item is not None:
         return render_template(
@@ -197,7 +199,7 @@ def my_snippets():
                     ),
                 )
     else:
-        return "ERROR ouaaaaah", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/add", methods=["GET"])
@@ -226,8 +228,8 @@ def add_snippet_post():
 
 @app.route("/modify/<int:id>", methods=["GET"])
 def modify_snippet_get(id):
-    if not session.get('login'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -240,13 +242,13 @@ def modify_snippet_get(id):
                     title="Modify a snippet (%s)" % item['title'])
                 )
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/modify/<int:id>", methods=["POST"])
 def modify_snippet_post(id):
-    if not session.get('login'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         item['date'] = datetime.now()
@@ -259,8 +261,8 @@ def modify_snippet_post(id):
 
 @app.route("/delete/<int:id>", methods=["GET"])
 def delete_snippet_get(id):
-    if not session.get('logged_in'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -270,19 +272,19 @@ def delete_snippet_get(id):
                 page=get_page_informations(title="Delete a snippet"),
                 )
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete_snippet_post(id):
-    if not session.get('logged_in'):
-        return redirect(url_for("connect"))
+    if not ckeck_rights(id):
+        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         item.delete()
         return redirect(url_for("index"))
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route('/connect', methods=('GET',))
@@ -383,4 +385,3 @@ def get_account():
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
-
