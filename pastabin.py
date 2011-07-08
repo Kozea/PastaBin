@@ -216,6 +216,9 @@ def add_snippet_get():
 
 @app.route("/add", methods=["POST"])
 def add_snippet_post():
+    if request.form['snip_text'] == '':
+        flash("empty text !")
+        return redirect(url_for("add_snippet_get"))
     item = Snippet.create({
         'person': get_user_id(),
         'date': datetime.now(),
