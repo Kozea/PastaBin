@@ -138,8 +138,9 @@ def get_user_id():
 
 def ckeck_rights(snippet_id):
     item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
-    if item["person"]["id"] == get_user_id() and get_user_id() != 0:
-        return True
+    if item is not None:
+        if item["person"]["id"] == get_user_id() and get_user_id() != 0:
+            return True
     return False
 
 
@@ -303,7 +304,7 @@ def connect():
     if item is not None:
         if '' == request.form.get('login', '') \
             or '' == request.form.get('password', ''):
-                flash("Empty field !")
+                flash("Empty field !", "error")
                 return redirect(url_for("connect"))
         if item['password'] == request.form['password']:
             session['login'] = item['login']
@@ -311,7 +312,7 @@ def connect():
             flash("Welcome %s !" % escape(session["login"]), "ok")
             return redirect(url_for("index"))
     else:
-        flash("Invalid login or password !")
+        flash("Invalid login or password !", "error")
         return redirect(url_for("connect"))
 
 
@@ -319,7 +320,7 @@ def connect():
 def disconnect():
     session['login'] = None
     session['id'] = None
-    flash('You are disconnected !')
+    flash('You are disconnected !', "ok")
     return redirect(url_for("index"))
 
 
@@ -337,10 +338,10 @@ def register():
         or '' == request.form.get('password1', '') \
         or '' == request.form.get('password2', '') \
         or '' == request.form.get('email', '') :
-        flash("Some fields are empty !")
+        flash("Some fields are empty !", "error")
         return redirect(url_for("register"))
     if request.form['password1'] != request.form['password2']:
-        flash("Passwords are not same !")
+        flash("Passwords are not same !", "error")
         return redirect(url_for("register"))
     person = Person.create({
         'login': request.form['login'],
@@ -360,7 +361,7 @@ def account():
         return redirect(url_for("connect"))
     item = Person.all.filter(c.id == session["id"]).one(None).execute()
     if request.form["password1"] != request.form["password2"]:
-        flash("Passwords are not same !")
+        flash("Passwords are not same !", "error")
         return redirect(url_for("account"))
     if item is not None:
         item["login"] = request.form["login"]
@@ -368,7 +369,7 @@ def account():
         item["email"] = request.form["email"]
         item.save()
         session["login"] = request.form["login"]
-        flash("Your account is been modify !")
+        flash("Your account is been modify !", "ok")
     return redirect(url_for("index"))
 
 
