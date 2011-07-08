@@ -1,17 +1,11 @@
 {% extends "_layout.jinja2" %}
 {% block content %}
 <h3>About PastaBin</h3>
-<p>Text about PastaBin. Lorem ipsum dolor sit amet, consectetur adipiscing
-elit. Quisque ac elit nec orci egestas adipiscing quis id erat.</p>
-<p>Vestibulum eu feugiat elit. Donec porttitor, risus sed dapibus convallis,
-risus turpis sagittis felis, nec adipiscing enim neque quis nisl. Mauris
-mauris justo, scelerisque ultrices interdum vel, accumsan vitae arcu.
-Vestibulum et bibendum erat. Aenean sed nisl dui. Pellentesque varius,
-nulla eget lobortis blandit, libero arcu facilisis libero, et commodo enim
-magna sit amet justo. Lorem ipsum dolor sit amet, consectetur adipiscing
-elit. Pellentesque habitant morbi tristique senectus et netus et
-malesuada fames ac turpis egestas.</p>
-
+<p>PastaBin is a free web application allowing users to upload sources codes.</p>
+<p>Everybody can add snippets. To use all functionalities of PastaBin,
+<a href="{{ url_for("register") }}">Register now</a>. It's simple, fast and free.</p>
+<p>With your free account, you can modify and delete your snippets.</p>
+<p>Have fun with PastaBin !</p>
 <h3>Last snippets</h3>
 <ul class="index">
 {% for snippet in snippets %}

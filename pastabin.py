@@ -73,7 +73,7 @@ class PygmentsStyle(Style):
 
 @app.template_filter("date_format")
 def pretty_datetime(d):
-    return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
+    return d.strftime("%A %d %B %Y @ %H:%M:%S").decode('utf-8')
 
 
 @app.template_filter("snip_user")
@@ -306,6 +306,8 @@ def delete_snippet_post(id):
 
 @app.route('/connect', methods=('GET',))
 def get_connect():
+    if get_user_id():
+        return redirect(url_for("index"))
     return render_template(
             'connect.html.jinja2',
             page=get_page_informations(title="Connexion"),
@@ -360,7 +362,6 @@ def register():
         flash("Some fields are empty !", "error")
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
-
     if request.form['password1'] != request.form['password2']:
         flash("Passwords are not same !", "error")
         return get_register(def_login=request.form.get('login'),
