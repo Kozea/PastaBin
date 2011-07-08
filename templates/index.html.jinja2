@@ -1,21 +1,19 @@
 {% extends "_layout.jinja2" %}
 {% block content %}
 <h3>About PastaBin</h3>
-<p>Text about PastaBin. Lorem ipsum dolor sit amet, consectetur adipiscing
-elit. Quisque ac elit nec orci egestas adipiscing quis id erat.</p>
-<p>Vestibulum eu feugiat elit. Donec porttitor, risus sed dapibus convallis,
-risus turpis sagittis felis, nec adipiscing enim neque quis nisl. Mauris
-mauris justo, scelerisque ultrices interdum vel, accumsan vitae arcu.
-Vestibulum et bibendum erat. Aenean sed nisl dui. Pellentesque varius,
-nulla eget lobortis blandit, libero arcu facilisis libero, et commodo enim
-magna sit amet justo. Lorem ipsum dolor sit amet, consectetur adipiscing
-elit. Pellentesque habitant morbi tristique senectus et netus et
-malesuada fames ac turpis egestas.</p>
-
+<p>PastaBin is a free web application allowing users to upload source codes.</p>
+<p>Everybody can add snippets. PastaBin highlights automatically your source code.</p>
+<p>To use others functionalities like modifying or deleting snippets,
+<a href="{{ url_for("register") }}">register now</a>. It's simple, fast and free.</p>
+<p>Have fun with PastaBin !</p>
 <h3>Last snippets</h3>
-<ul class="index">
-{% for snippet in snippets %}
-<li><a href="{{ url_for("get_snippet_by_id", snippet_id=snippet.id)}}" >{{ snippet.title |check_title}} <span>(posted by {{ snippet.person.login | snip_user }}, on {{ snippet.date | date_format }})</span></a></li>
-{% endfor %}
-</ul>
+{% if snippets %}
+  <ul class="index">
+  {% for snippet in snippets %}
+    <li><a href="{{ url_for("get_snippet_by_id", snippet_id=snippet.id)}}" >{{ snippet.title |check_title}} <span>(posted by {{ snippet.person.login | snip_user }}, on {{ snippet.date | date_format }})</span></a></li>
+  {% endfor %}
+    </ul>
+{% else %}
+  <p class="warning">There is no snippet yet !</p>
+{% endif %}
 {% endblock content %}

@@ -54,6 +54,7 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.lexers import guess_lexer
 from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, Number
+
 from access_points import *
 from utils.mail import SmtpAgent
 from jinja2.utils import Markup
@@ -83,7 +84,7 @@ def constants():
     
 @app.template_filter("date_format")
 def pretty_datetime(d):
-    return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
+    return d.strftime("%A %d %B %Y @ %H:%M:%S").decode('utf-8')
 
 
 @app.template_filter("snip_user")
@@ -148,7 +149,7 @@ def get_user_id():
 
 def ckeck_rights(snippet_id):
     item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
-    if item is not None:
+    if item is not None and item['person'] is not None:
         if item["person"]["id"] == get_user_id() and get_user_id() != 0:
             return True
     return False
@@ -158,7 +159,7 @@ def ckeck_rights(snippet_id):
 def index():
     return render_template(
             "index.html.jinja2",
-            snippets=Snippet.all.sort(-c.date)[:10].execute(),
+            snippets=list(Snippet.all.sort(-c.date)[:10].execute()),
             page=get_page_informations(title="Home"),
             )
 
@@ -197,13 +198,13 @@ def get_snippet_by_id(snippet_id):
 
 @app.route("/my_snippets", methods=["GET"])
 def my_snippets():
-    if not ckeck_rights(get_user_id()):
+    if get_user_id() <= 0:
         return abort(403)
     item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
     if item is not None:
         return render_template(
                 "my_snippets.html.jinja2",
-                snippets=item,
+                snippets=list(item),
                 page=get_page_informations(
                     title="My snippets",
                     menu_active="my_snippets",
@@ -316,6 +317,8 @@ def delete_snippet_post(id):
 
 @app.route('/connect', methods=('GET',))
 def get_connect():
+    if get_user_id():
+        return redirect(url_for("index"))
     return render_template(
             'connect.html.jinja2',
             page=get_page_informations(title="Connexion"),
@@ -330,13 +333,16 @@ def connect():
     if item is not None:
         if '' == request.form.get('login', '') \
             or '' == request.form.get('password', ''):
-                flash("Empty field !", "error")
+                flash("Invalid login or password !", "error")
                 return redirect(url_for("connect"))
-        if item['password'] == request.form['password']:
+        if item['password'] == sha256(request.form['password']).hexdigest():
             session['login'] = item['login']
             session['id'] = item['id']
             flash("Welcome %s !" % escape(session["login"]), "ok")
             return redirect(url_for("index"))
+        else:
+            flash("Invalid login or password !", "error")
+            return redirect(url_for("connect"))
     else:
         flash("Invalid login or password !", "error")
         return redirect(url_for("connect"))
@@ -351,9 +357,12 @@ def disconnect():
 
 
 @app.route('/register', methods=['GET'])
-def get_register():
+def get_register(def_login='', def_email=''):
     return render_template(
             'account.html.jinja2',
+            action=url_for("register"),
+            login=def_login,
+            email=def_email,
             page=get_page_informations(title="Register"),
             )
 
@@ -365,18 +374,26 @@ def register():
         or '' == request.form.get('password2', '') \
         or '' == request.form.get('email', '') :
         flash("Some fields are empty !", "error")
-        return redirect(url_for("register"))
+        return get_register(def_login=request.form.get('login'),
+                def_email=request.form.get('email'))
     if request.form['password1'] != request.form['password2']:
         flash("Passwords are not same !", "error")
-        return redirect(url_for("register"))
-    person = Person.create({
-        'login': request.form['login'],
-        'password': request.form['password2'],
-        'email': request.form['email'],
-        })
-    person.save()
-    session['login'] = person['login']
-    session['id'] = person['id']
+        return get_register(def_login=request.form.get('login'),
+                def_email=request.form.get('email'))
+    item = Person.all.filter(c.login.lower() == \
+        request.form['login'].lower()).one(None).execute()
+    if item is not None:
+        flash("Your login already exists !", "error")
+        return get_register(def_login='', def_email=request.form.get('email'))
+    else:
+        person = Person.create({
+            'login': request.form['login'],
+            'password': sha256(request.form['password2']).hexdigest(),
+            'email': request.form['email'],
+            })
+        person.save()
+        session['login'] = person['login']
+        session['id'] = person['id']
     flash("Welcome %s !" % escape(session["login"]), "ok")
     return redirect(url_for("index"))
 
@@ -385,14 +402,27 @@ def register():
 def account():
     if not session.get("id"):
         return redirect(url_for("connect"))
+    if '' == request.form.get('login', '') \
+        or '' == request.form.get('email', ''):
+        flash("Some fields are empty !", "error")
+        return get_account(def_login=request.form.get('login'),
+                def_email=request.form.get('email'))
+    person = Person.all.filter(c.login.lower() == \
+        request.form['login'].lower()).one(None).execute()
     item = Person.all.filter(c.id == session["id"]).one(None).execute()
-    if request.form["password1"] != request.form["password2"]:
-        flash("Passwords are not same !", "error")
-        return redirect(url_for("account"))
+    if person is not None and person['login'] != item['login']:
+        flash("Your login already exists !", "error")
+        return get_account(def_login='', def_email=request.form.get('email'))
     if item is not None:
         item["login"] = request.form["login"]
-        item["password"] = request.form["password1"]
         item["email"] = request.form["email"]
+        if request.form["password1"] or request.form["password2"] :
+            if request.form["password1"] != request.form["password2"]:
+                flash("Passwords are not same !", "error")
+                return get_account(def_login=request.form.get('login'),
+                        def_email=request.form.get('email'))
+            else:
+                item["password"] = sha256(request.form['password1']).hexdigest()
         item.save()
         session["login"] = request.form["login"]
         flash("Your account is been modify !", "ok")
@@ -400,10 +430,13 @@ def account():
 
 
 @app.route('/account', methods=['GET'])
-def get_account():
+def get_account(def_login='', def_email=''):
     item = Person.all.filter(c.id == get_user_id()).one(None).execute()
     return render_template(
             'account.html.jinja2',
+            action=url_for("account"),
+            login=item['login'],
+            email=item['email'],
             page=get_page_informations(title="Manage my account"),
             person=item
             )
@@ -437,3 +470,5 @@ def get_random_password():
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
+
+
