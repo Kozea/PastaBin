@@ -71,6 +71,19 @@ class PygmentsStyle(Style):
         Number: '#859900'}
 
 
+@app.template_filter("date_format")
+def pretty_datetime(d):
+    return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
+
+
+@app.template_filter("snip_user")
+def snip_user(user):
+    if type(user) != unicode:
+        return 'Guest'
+    else:
+        return user
+
+
 def get_page_informations(title="Unknown", menu_active=None):
     """Retun various informations like the menu, the page title,...
 
@@ -113,11 +126,6 @@ def get_page_informations(title="Unknown", menu_active=None):
 def get_user_id():
     """Return the user id if logged, 0 else"""
     return session.get("id", 0)
-
-
-def get_user_login():
-    """Return the user login if logged, Guest else"""
-    return session.get("login", "Guest")
 
 
 def ckeck_rights(id):
@@ -165,7 +173,7 @@ def get_snippet_by_id(snippet_id):
                 )
     else:
         flash("Invalid !")
-        return "ERROR ouaaaaah", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/my_snippets", methods=["GET"])
@@ -183,7 +191,7 @@ def my_snippets():
                     ),
                 )
     else:
-        return "ERROR ouaaaaah", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/add", methods=["GET"])
@@ -226,7 +234,7 @@ def modify_snippet_get(id):
                     title="Modify a snippet (%s)" % item['title'])
                 )
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/modify/<int:id>", methods=["POST"])
@@ -256,7 +264,7 @@ def delete_snippet_get(id):
                 page=get_page_informations(title="Delete a snippet"),
                 )
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route("/delete/<int:id>", methods=["POST"])
@@ -268,7 +276,7 @@ def delete_snippet_post(id):
         item.delete()
         return redirect(url_for("index"))
     else:
-        return "Groaaah!", 404 #FIXME
+        return abort(404)
 
 
 @app.route('/connect', methods=('GET',))
@@ -368,7 +376,4 @@ def get_account():
 
 if __name__ == '__main__':
 #    app.run()
-    @app.template_filter("date_format")
-    def pretty_datetime(d):
-        return d.strftime("%A %d. %B %Y @ %H:%M:%S").decode('utf-8')
     app.run(debug=True)
