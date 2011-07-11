@@ -43,6 +43,7 @@ __version__ = '0.1'
 
 from datetime import datetime
 from hashlib import sha256
+from functools import wraps
 import random
 import string
 
@@ -198,12 +199,15 @@ def get_user_id():
     return session.get('id', 0)
 
 
-def ckeck_rights(snippet_id):
-    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
-    if item is not None and item['person'] is not None:
-        if item['person']['id'] == get_user_id() and get_user_id() != 0:
-            return True
-    return False
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        item = Snippet.all.filter(c.id == kwargs['id']).one(None).execute()
+        if item is not None and item['person'] is not None:
+            if item["person"]["id"] == get_user_id() and get_user_id() != 0:
+                return f(*args, **kwargs)
+        return abort(403)
+    return decorated_function
 
 
 @app.route('/', methods=['GET'])
@@ -297,6 +301,7 @@ def add_snippet_post():
                 request.form['snip_text'])
 
 
+@login_required
 @app.route('/modify/<int:id>', methods=['GET'])
 def modify_snippet_get(id):
     """The page for modifying snippets.
@@ -304,8 +309,6 @@ def modify_snippet_get(id):
     Argument:
         id -- The id of the snippet to modify
     """
-    if not ckeck_rights(id):
-        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -322,6 +325,7 @@ def modify_snippet_get(id):
         return abort(404)
 
 
+@login_required
 @app.route('/modify/<int:id>', methods=['POST'])
 def modify_snippet_post(id):
     """The page for modifying snippets (POST).
@@ -329,8 +333,6 @@ def modify_snippet_post(id):
     Argument:
         id -- The id of the snippet to modify
     """
-    if not ckeck_rights(id):
-        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None and len(request.form['snip_text']) > 0:
         item['date'] = datetime.now()
@@ -343,6 +345,7 @@ def modify_snippet_post(id):
     return redirect(url_for('get_snippet_by_id', snippet_id=item['id']))
 
 
+@login_required
 @app.route('/delete/<int:id>', methods=['GET'])
 def delete_snippet_get(id):
     """The page for deleting snippets.
@@ -350,8 +353,6 @@ def delete_snippet_get(id):
     Argument:
         id -- The id of the snippet to delete
     """
-    if not ckeck_rights(id):
-        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -363,6 +364,7 @@ def delete_snippet_get(id):
         return abort(404)
 
 
+@login_required
 @app.route('/delete/<int:id>', methods=['POST'])
 def delete_snippet_post(id):
     """The page for deleting snippets (POST).
@@ -370,8 +372,6 @@ def delete_snippet_post(id):
     Argument:
         id -- The id of the snippet to delete
     """
-    if not ckeck_rights(id):
-        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         item.delete()
@@ -544,5 +544,4 @@ def forgotten_password_post():
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
-
 
