@@ -37,6 +37,11 @@
 ###########################################################################
 
 
+"""
+This file contains all the corns (access points) used by PastaBin.
+"""
+
+
 from datetime import datetime
 
 from multicorn import Multicorn

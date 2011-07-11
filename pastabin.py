@@ -37,8 +37,19 @@
 ###########################################################################
 
 
+"""
+PastaBin is a free web application allowing users to pasting text and source
+code (called snippet). The syntax of the snippets are automatically colorized
+in order to make them more readable.
+
+No registration is required for posting snippets, but registered users can
+list, modify and delete their own snippets.
+
+Have fun with PastaBin!
+"""
+
 __app_name__ = 'PastaBin'
-__version__ = '0.1'
+__version__ = '1.0'
 
 
 #CONFIG
@@ -195,6 +206,7 @@ def get_page_informations(title='Unknown', menu_active=None):
     return {
             'menu': menu_items,
             'title': check_title(title),
+            'doc': "<p>%s</p>" % __doc__.replace("\n\n", "</p>\n<p>"),
             'appname': __app_name__}
 
 

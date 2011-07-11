@@ -1,11 +1,8 @@
 {% extends "_layout.jinja2" %}
 {% block content %}
 <h3>About PastaBin</h3>
-<p>PastaBin is a free web application allowing users to upload source codes.</p>
-<p>Everybody can add snippets. PastaBin highlights automatically your source code.</p>
-<p>To use others functionalities like modifying or deleting snippets,
-<a href="{{ url_for("register") }}">register now</a>. It's simple, fast and free.</p>
-<p>Have fun with PastaBin !</p>
+{{ page.doc|safe }}
+
 <h3>Last snippets</h3>
 {% if snippets %}
   <ul class="index">
