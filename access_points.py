@@ -42,16 +42,15 @@ from datetime import datetime
 from multicorn import Multicorn
 from multicorn.corns.alchemy import Alchemy
 from multicorn.declarative import declare, Property, Relation
-from multicorn.requests import CONTEXT as c
-from multicorn.corns.extensers.computed import ComputedExtenser
 
 
 mc = Multicorn()
 
 
 @mc.register
-@declare(Alchemy, identity_properties=("id",), url="sqlite:///pastabin.db")
+@declare(Alchemy, identity_properties=["id"], url="sqlite:///pastabin.db")
 class Person(object):
+    """This corn contains the users informations"""
     id = Property(type=int)
     login = Property(type=unicode)
     password = Property(type=unicode)
@@ -59,8 +58,9 @@ class Person(object):
 
 
 @mc.register
-@declare(Alchemy, identity_properties=("id",), url="sqlite:///pastabin.db")
+@declare(Alchemy, identity_properties=["id"], url="sqlite:///pastabin.db")
 class Snippet(object):
+    """This corn contains the snippets"""
     id = Property(type=int)
     person = Relation(Person)
     date = Property(type=datetime)
