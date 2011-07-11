@@ -4,7 +4,12 @@
   <fieldset>
     <legend>Informations</legend>
     <label for="snip_title">Title:</label> <input type="text" name="snip_title" id="snip_title" value="{{ snip_title }}" />
-    <label for="snip_language">Language:</label> <input type="text" name="snip_language" id="snip_language" value="{{ snip_language }}" /><!-- FIXME -->
+    <label for="snip_language">Language:</label> <input type="text" name="snip_language" id="snip_language" list="language_list" value="{{ snip_language }}" />
+    <datalist id="language_list">
+    {% for lexer in lexerslist %}
+      <option value="{{ lexer[1] }}">{{ lexer[0] }}</option>
+    {% endfor %}
+    </datalist>
   </fieldset>
   <fieldset>
     <legend>Text</legend>
