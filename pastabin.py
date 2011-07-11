@@ -214,6 +214,7 @@ def get_page_informations(title="Unknown", menu_active=None):
         title -- The page title
         menu_active -- The name of the current page
     """
+    #Menu items for everybody
     menu_items = [
             {
                 'name': 'index',
@@ -225,12 +226,14 @@ def get_page_informations(title="Unknown", menu_active=None):
                 'title': 'New snippet',
                 'url': url_for('add_snippet_get'),
                 'active': False}]
+    #Menu items for logged users
     if session.get('login', False):
         menu_items.append({
             'name': 'my_snippets',
             'title': 'My snippets',
             'url': url_for('my_snippets'),
             'active': False})
+    #Active item of the menu
     for item in menu_items:
         if menu_active == item['name']:
             item['active'] = True
@@ -238,7 +241,7 @@ def get_page_informations(title="Unknown", menu_active=None):
     return {
             'menu': menu_items,
             'title': check_title(title),
-            'doc': "<p>%s</p>" % __doc__.replace("\n\n", "</p>\n<p>"),
+            'doc': '<p>%s</p>' % __doc__.replace('\n\n', '</p>\n<p>'),
             'appname': __app_name__}
 
 
@@ -507,15 +510,15 @@ def register():
     """Page for registering new users (POST)."""
     item = Person.all.filter(
         c.login.lower() == request.form['login'].lower()).one(None).execute()
-    if '' == request.form.get('login', '') \
-        or '' == request.form.get('password1', '') \
-        or '' == request.form.get('password2', '') \
-        or '' == request.form.get('email', '') :
+    if '' in (request.form.get('login', ''),
+        request.form.get('password1', ''),
+        request.form.get('password2', ''),
+        request.form.get('email', '')):
         flash('Some fields are empty !', 'error')
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
     if item:
-        flash("Your login already exists !", "error")
+        flash('Your login already exists !', 'error')
         return get_register(def_login='', def_email=request.form.get('email'))
     if request.form['password1'] != request.form['password2']:
         flash('Passwords are not same !', 'error')
@@ -528,8 +531,8 @@ def register():
     person.save()
     session['login'] = person['login']
     session['id'] = person['id']
-    flash("Welcome %s !" % escape(session["login"]), "ok")
-    return redirect(url_for("index"))
+    flash('Welcome %s !' % escape(session['login']), 'ok')
+    return redirect(url_for('index'))
 
 
 @app.route('/account', methods=['GET'])
@@ -590,17 +593,17 @@ def forgotten_password_post():
     item = Person.all.filter(c.login.lower() == request.form['login'].lower())
     item = item.one(None).execute()
     if item is not None :
-        if item['email'] == request.form["email"]:
+        if item['email'] == request.form['email']:
             item['password'] = sha256(password).hexdigest()
             item.save()
-            message = u"your new password is: %s" % password
+            message = u'your new password is: %s' % password
             send_email(message, item['email'])
-            flash("A mail was sent to : %s" % item['email'], "ok")
-            return redirect(url_for("connect"))
+            flash('A mail was sent to : %s' % item['email'], 'ok')
+            return redirect(url_for('connect'))
         else:
-            flash("Invalid email for this login", "error ")
+            flash('Invalid email for this login', 'error ')
     else:
-        flash("This login does not exist", "error")
+        flash('This login does not exist', 'error')
     return forgotten_password_get()
 
 
