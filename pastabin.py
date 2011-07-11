@@ -154,7 +154,7 @@ def check_title(title):
 
 
 def get_page_informations(title="Unknown", menu_active=None):
-    """Retun various informations like the menu, the page title,...
+    """Return various informations like the menu, the page title,...
 
     Arguments:
         title -- The page title
@@ -198,10 +198,13 @@ def get_user_id():
 
 
 def login_required(f):
+    """If a user goes to a protected page and is not logged in or have not
+    rights to do some actions like modify or delete, then he should be
+    redirected to the abort page"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         item = Snippet.all.filter(c.id == kwargs['id']).one(None).execute()
-        if item is not None and item['person'] is not None:
+        if item['person'] is not None:
             if item["person"]["id"] == get_user_id() and get_user_id() != 0:
                 return f(*args, **kwargs)
         return abort(403)
@@ -353,37 +356,27 @@ def delete_snippet_post(id):
         return abort(404)
 
 
-@app.route('/connect', methods=('GET',))
+@app.route('/connect', methods=['GET'])
 def get_connect():
     if get_user_id():
-        return redirect(url_for("index"))
+        return redirect(url_for('index'))
     return render_template(
             'connect.html.jinja2',
-            page=get_page_informations(title="Connexion"),
-            )
+            page=get_page_informations(title='Connexion'))
 
 
 @app.route('/connect', methods=['POST'])
 def connect():
     item = Person.all.filter(
-        c.login.lower() == request.form['login'].lower()).one(None)
-    item = item.execute()
+        c.login.lower() == request.form['login'].lower()).one(None).execute()
     if item is not None:
-        if '' == request.form.get('login', '') \
-            or '' == request.form.get('password', ''):
-                flash("Invalid login or password !", "error")
-                return redirect(url_for("connect"))
         if item['password'] == sha256(request.form['password']).hexdigest():
             session['login'] = item['login']
             session['id'] = item['id']
-            flash("Welcome %s !" % escape(session["login"]), "ok")
-            return redirect(url_for("index"))
-        else:
-            flash("Invalid login or password !", "error")
-            return redirect(url_for("connect"))
-    else:
-        flash("Invalid login or password !", "error")
-        return redirect(url_for("connect"))
+            flash('Welcome %s !' % escape(session['login']), 'ok')
+            return redirect(url_for('index'))
+    flash('Invalid login or password !', 'error')
+    return redirect(url_for('connect'))
 
 
 @app.route('/disconnect', methods=['GET'])
@@ -401,8 +394,7 @@ def get_register(def_login='', def_email=''):
             action=url_for("register"),
             login=def_login,
             email=def_email,
-            page=get_page_informations(title="Register"),
-            )
+            page=get_page_informations(title="Register"))
 
 
 @app.route('/register', methods=['POST'])
@@ -414,10 +406,12 @@ def register():
         flash("Some fields are empty !", "error")
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
+
     if request.form['password1'] != request.form['password2']:
         flash("Passwords are not same !", "error")
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
+
     item = Person.all.filter(c.login.lower() == \
         request.form['login'].lower()).one(None).execute()
     if item is not None:
@@ -511,4 +505,4 @@ def get_random_password():
 
 if __name__ == '__main__':
 #    app.run()
-    app.run(debug=True)
+    app.run(debug=True, port=5042)
