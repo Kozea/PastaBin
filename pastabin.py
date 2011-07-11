@@ -56,14 +56,20 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.lexers import guess_lexer
 from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, Number
+""" for mail"""
+import smtplib
+from email.mime.text import MIMEText
 
 from access_points import *
-from utils.mail import SmtpAgent
 from jinja2.utils import Markup
 
 app = Flask(__name__)
 app.jinja_env.autoescape = True
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+
+
+
+
 
 
 class PygmentsStyle(Style):
@@ -76,12 +82,7 @@ class PygmentsStyle(Style):
         Error: '#dc322f',
         Number: '#859900'}
 
-@app.before_request
-def constants():
-    """ Global context constant injector."""
-    g.smtp_agent = SmtpAgent()
-    
-    
+
 @app.template_filter("date_format")
 def pretty_datetime(d):
     return d.strftime("%A %d %B %Y @ %H:%M:%S").decode('utf-8')
@@ -443,6 +444,7 @@ def get_account(def_login='', def_email=''):
 
 @app.route('/password', methods=['GET'])
 def forgotten_password_get():
+    """Return to the page forgotten_password.html.jinja2"""
     return render_template(
             'forgotten_password.html.jinja2',
             page=get_page_informations(title="Forgot your password ?"),
@@ -451,24 +453,37 @@ def forgotten_password_get():
 
 @app.route('/password', methods=['POST'])
 def forgotten_password_post():
+    """Verify if the mail can be sent if so send_mail"""
     password = get_random_password()
     item = Person.all.filter(c.login.lower() == request.form["login"].lower()).one(None).execute()
-    if item is not None:
-        item['password'] = sha256(password).hexdigest()
-        item.save()
-        message = u"your new password is: %s" % password
-        subject = u"Forgotten Password"
-        g.smtp_agent.sendmail_alternative(message, subject, item['email'])
-        flash("A mail was sent to : %s" % item['email'], "ok")
-        return redirect(url_for("connect"))
+    if item is not None :
+        if item['email'] == request.form["email"]:
+            item['password'] = sha256(password).hexdigest()
+            item.save()
+            message = u"your new password is: %s" % password
+            send_mail(message, item['email'])
+            flash("A mail was sent to : %s" % item['email'], "ok")
+            return redirect(url_for("connect"))
+        else:
+            flash("Invalid email for this login", "error ")
     else:
         flash("This login does not exist", "error")
-        return forgotten_password_get()
-
+    return forgotten_password_get()
 
 def get_random_password():
     """Get an random 8-character password."""
     return ''.join(random.sample(string.ascii_lowercase, 8))
+
+
+def send_mail(message="", recipient=""):
+    """send mail"""
+    msg = MIMEText(message)
+    msg['Subject'] = u"Forgotten Password"
+    msg['To'] = recipient
+    msg['From'] = 'no-reply@pastabin.org'
+    s = smtplib.SMTP("smtp.free.fr", 25)
+    s.sendmail('no-reply@pastabin.org', recipient, msg.as_string())
+    s.quit()
 
 
 if __name__ == '__main__':
