@@ -47,6 +47,7 @@ import random
 import string
 
 from flask import *
+from functools import wraps
 from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
 from pygments import highlight
@@ -80,8 +81,8 @@ class PygmentsStyle(Style):
 def constants():
     """ Global context constant injector."""
     g.smtp_agent = SmtpAgent()
-    
-    
+
+
 @app.template_filter("date_format")
 def pretty_datetime(d):
     return d.strftime("%A %d %B %Y @ %H:%M:%S").decode('utf-8')
@@ -147,12 +148,15 @@ def get_user_id():
     return session.get("id", 0)
 
 
-def ckeck_rights(snippet_id):
-    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
-    if item is not None and item['person'] is not None:
-        if item["person"]["id"] == get_user_id() and get_user_id() != 0:
-            return True
-    return False
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        item = Snippet.all.filter(c.id == kwargs['id']).one(None).execute()
+        if item is not None and item['person'] is not None:
+            if item["person"]["id"] == get_user_id() and get_user_id() != 0:
+                return f(*args, **kwargs)
+        return abort(403)
+    return decorated_function
 
 
 @app.route("/", methods=["GET"])
@@ -160,8 +164,7 @@ def index():
     return render_template(
             "index.html.jinja2",
             snippets=list(Snippet.all.sort(-c.date)[:10].execute()),
-            page=get_page_informations(title="Home"),
-            )
+            page=get_page_informations(title="Home"))
 
 
 @app.route("/snippet/<int:snippet_id>", methods=["GET"])
@@ -252,9 +255,8 @@ def add_snippet_post():
 
 
 @app.route("/modify/<int:id>", methods=["GET"])
+@login_required
 def modify_snippet_get(id):
-    if not ckeck_rights(id):
-        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -272,9 +274,8 @@ def modify_snippet_get(id):
 
 
 @app.route("/modify/<int:id>", methods=["POST"])
+@login_required
 def modify_snippet_post(id):
-    if not ckeck_rights(id):
-        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None and len(request.form['snip_text']) > 0:
         item['date'] = datetime.now()
@@ -288,9 +289,8 @@ def modify_snippet_post(id):
 
 
 @app.route("/delete/<int:id>", methods=["GET"])
+@login_required
 def delete_snippet_get(id):
-    if not ckeck_rights(id):
-        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         return render_template(
@@ -304,9 +304,8 @@ def delete_snippet_get(id):
 
 
 @app.route("/delete/<int:id>", methods=["POST"])
+@login_required
 def delete_snippet_post(id):
-    if not ckeck_rights(id):
-        return abort(403)
     item = Snippet.all.filter(c.id == id).one(None).execute()
     if item is not None:
         item.delete()
@@ -474,5 +473,3 @@ def get_random_password():
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
-
-
