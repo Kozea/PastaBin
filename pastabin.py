@@ -237,7 +237,7 @@ def index():
 
 @app.route('/snippet/<int:snippet_id>', methods=['GET'])
 @app.route('/s/<int:snippet_id>', methods=['GET'])
-def get_snippet_by_id(snippet_id):
+def get_snippet_id(snippet_id):
     """The snippet view page.
 
     Argument:
