@@ -75,6 +75,7 @@ from datetime import datetime
 from hashlib import sha256
 from functools import wraps
 from email.mime.text import MIMEText
+from socket import error as socketerror
 
 from flask import (Flask, url_for, render_template, redirect, abort,
         flash, escape, session, request)
@@ -205,6 +206,28 @@ def check_title(title):
         return 'Unamed snippet'
     else:
         return title
+
+def send_email(message, recipient):
+    """Send a email.
+
+    Arguments:
+        message -- the email message
+        recipient -- the email address where the message will be sent
+    """
+    msg = MIMEText(message)
+    msg['Subject'] = CONFIG['email_subject']
+    msg['To'] = recipient
+    msg['From'] = CONFIG['email_from_addr']
+    try:
+        smtp = smtplib.SMTP(
+                CONFIG['email_smtp_server'],
+                CONFIG['email_smtp_port'])
+        smtp.sendmail(CONFIG['email_from_addr'], recipient, msg.as_string())
+    except socketerror:
+        return False
+    else:
+        smtp.quit()
+    return True
 
 
 def get_page_informations(title="Unknown", menu_active=None):
@@ -593,44 +616,22 @@ def forgotten_password_post():
     item = Person.all.filter(c.login.lower() == request.form['login'].lower())
     item = item.one(None).execute()
     if item is not None :
-        if item['email'] == request.form["email"]:
+        if item['email'] == request.form['email']:
             item['password'] = sha256(password).hexdigest()
             item.save()
-            message = u"your new password is: %s" % password
+            message = u'your new password is: %s' % password
             if send_email(message, item['email']):
-                flash("A mail was sent to : %s" % item['email'], "ok")
-                return redirect(url_for("connect"))
+                flash('A mail was sent to : %s' % item['email'], 'ok')
+                return redirect(url_for('connect'))
             else:
-                flash('An error occured while sending the email', "error")
+                flash('An error occured while sending the email', 'error')
                 return forgotten_password_get()
         else:
-            flash("Invalid email for this login", "error ")
+            flash('Invalid email for this login', 'error')
     else:
-        flash("This login does not exist", "error")
+        flash('This login does not exist', 'error')
     return forgotten_password_get()
 
-
-def send_email(message, recipient):
-    """Send a email.
-
-    Arguments:
-        message -- the email message
-        recipient -- the email address where the message will be sent
-    """
-    msg = MIMEText(message)
-    msg['Subject'] = CONFIG['email_subject']
-    msg['To'] = recipient
-    msg['From'] = CONFIG['email_from_addr']
-    try:
-        smtp = smtplib.SMTP(
-                CONFIG['email_smtp_server'],
-                CONFIG['email_smtp_port'])
-        smtp.sendmail(CONFIG['email_from_addr'], recipient, msg.as_string())
-    except socketerror:
-        return False
-    else:
-        smtp.quit()
-    return True
 
 
 if __name__ == '__main__':
