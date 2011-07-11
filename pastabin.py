@@ -37,33 +37,53 @@
 ###########################################################################
 
 
-__app_name__ = "PastaBin"
-__version__ = "0.1"
+"""
+PastaBin is a free web application allowing users to pasting text and source
+code (called snippet). The syntax of the snippets are automatically colorized
+in order to make them more readable.
+
+No registration is required for posting snippets, but registered users can
+list, modify and delete their own snippets.
+
+Have fun with PastaBin!
+"""
+
+__app_name__ = 'PastaBin'
+__version__ = '1.0'
+
+
+#CONFIG
+SECRET_KEY = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+SMTP_SERVER = "smtp.free.fr"
+SMTP_PORT = 25
+EMAIL_FROM = 'no-reply@pastabin.org'
+EMAIL_SUBJECT = u'[PastaBin] New Password'
 
 
 from datetime import datetime
 from hashlib import sha256
-import random
-import string
-
-from flask import *
 from functools import wraps
-from multicorn.declarative import declare, Property
-from multicorn.requests import CONTEXT as c
+import random
+import smtplib
+from email.mime.text import MIMEText
+
+from flask import (Flask, url_for, render_template, redirect, abort,
+        flash, escape, session, request)
 from pygments import highlight
 from pygments.util import ClassNotFound as LexerNotFound
 from pygments.formatters import HtmlFormatter
-from pygments.lexers import get_all_lexers, get_lexer_by_name, get_lexer_for_filename, guess_lexer
+from pygments.lexers import (get_all_lexers, get_lexer_by_name,
+        get_lexer_for_filename, guess_lexer)
 from pygments.style import Style
-from pygments.token import *
+from pygments.token import Keyword, Name, Comment, String, Error, Number
+from multicorn.requests import CONTEXT as c
 
-from access_points import *
-from utils.mail import SmtpAgent
-from jinja2.utils import Markup
+from access_points import Person, Snippet
+
 
 app = Flask(__name__)
 app.jinja_env.autoescape = True
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+app.secret_key = SECRET_KEY
 
 
 class PygmentsStyle(Style):
@@ -78,7 +98,7 @@ class PygmentsStyle(Style):
 
 
 def colorize(language, title, text):
-    """Colorize the text syntax
+    """Colorize the text syntax.
 
     Guess the language of the text and colorize it.
 
@@ -109,16 +129,16 @@ def colorize(language, title, text):
     except LexerNotFound:
         pass
     #Fallback to the plain/text lexer
-    lexer = get_lexer_by_name("text")
+    lexer = get_lexer_by_name('text')
     return highlight(text, lexer, formatter), lexer.name
 
 
 def get_lexers_list():
-    """Get the supported language list
+    """Get the supported language list.
 
     Returns a list of tuple containing the language Displayable name
     and the language lexer name:
-        [("Display Name", "Lexer Name"),]
+        [('Display Name', 'Lexer Name'),]
     """
     lexers_list = []
     for lexer in get_all_lexers():
@@ -126,27 +146,29 @@ def get_lexers_list():
     return lexers_list
 
 
-@app.before_request
-def constants():
-    """ Global context constant injector."""
-    g.smtp_agent = SmtpAgent()
+def get_random_password():
+    """Get an random 8-character password."""
+    return ''.join(random.sample("abcdefghijklmnopqrstuvwxyz0123456789", 8))
 
 
-@app.template_filter("date_format")
-def pretty_datetime(d):
-    return d.strftime("%A %d %B %Y @ %H:%M:%S").decode('utf-8')
+@app.template_filter('date_format')
+def pretty_datetime(date):
+    """Convert the date into a better human readable format."""
+    return date.strftime('%A %d %B %Y @ %H:%M:%S').decode('utf-8')
 
 
-@app.template_filter("snip_user")
+@app.template_filter('snip_user')
 def snip_user(user):
+    """Check the user's name"""
     if type(user) != unicode:
         return 'Guest'
     else:
         return user
 
 
-@app.template_filter("check_title")
+@app.template_filter('check_title')
 def check_title(title):
+    """Check the snippet's title"""
     if title == '':
         return 'Unamed snippet'
     else:
@@ -162,25 +184,21 @@ def get_page_informations(title="Unknown", menu_active=None):
     """
     menu_items = [
             {
-                'name': "index",
-                'title': "Home",
-                'url': url_for("index"),
-                'active': False,
-            },
+                'name': 'index',
+                'title': 'Home',
+                'url': url_for('index'),
+                'active': False},
             {
-                'name': "add",
-                'title': "New snippet",
-                'url': url_for("add_snippet_get"),
-                'active': False,
-            },
-            ]
-    if session.get("login", False):
+                'name': 'add',
+                'title': 'New snippet',
+                'url': url_for('add_snippet_get'),
+                'active': False}]
+    if session.get('login', False):
         menu_items.append({
-            'name': "my_snippets",
-            'title': "My snippets",
-            'url': url_for("my_snippets"),
-            'active': False,
-            })
+            'name': 'my_snippets',
+            'title': 'My snippets',
+            'url': url_for('my_snippets'),
+            'active': False})
     for item in menu_items:
         if menu_active == item['name']:
             item['active'] = True
@@ -188,137 +206,154 @@ def get_page_informations(title="Unknown", menu_active=None):
     return {
             'menu': menu_items,
             'title': check_title(title),
-            'appname': __app_name__,
-            }
+            'doc': "<p>%s</p>" % __doc__.replace("\n\n", "</p>\n<p>"),
+            'appname': __app_name__}
 
 
 def get_user_id():
     """Return the user id if logged, 0 else"""
-    return session.get("id", 0)
+    return session.get('id', 0)
 
 
-def login_required(f):
+def login_required(func):
     """If a user goes to a protected page and is not logged in or have not
     rights to do some actions like modify or delete, then he should be
     redirected to the abort page"""
-    @wraps(f)
+    @wraps(func)
     def decorated_function(*args, **kwargs):
-        item = Snippet.all.filter(c.id == kwargs['id']).one(None).execute()
+        item = Snippet.all.filter(c.id == kwargs['snippet_id']).one(None).execute()
         if item is not None and item['person'] is not None:
             if item["person"]["id"] == get_user_id() and get_user_id() != 0:
-                return f(*args, **kwargs)
+                return func(*args, **kwargs)
         return abort(403)
     return decorated_function
 
 
-@app.route("/", methods=["GET"])
+@app.route('/', methods=['GET'])
 def index():
+    """The home page of the site."""
     return render_template(
-            "index.html.jinja2",
+            'index.html.jinja2',
             snippets=list(Snippet.all.sort(-c.date)[:10].execute()),
-            page=get_page_informations(title="Home"))
+            page=get_page_informations(title='Home'))
 
 
-@app.route("/snippet/<int:snippet_id>", methods=["GET"])
-@app.route("/s/<int:snippet_id>", methods=["GET"])
+@app.route('/snippet/<int:snippet_id>', methods=['GET'])
+@app.route('/s/<int:snippet_id>', methods=['GET'])
 def get_snippet_by_id(snippet_id):
+    """The snippet view page.
+
+    Argument:
+        snippet_id -- the id of the snippet to display
+    """
     item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
         item['text'], lexername = colorize(
                 item['language'],
                 item['title'],
-                item['text'],
-                )
+                item['text'])
         return render_template(
-                "snippet.html.jinja2",
+                'snippet.html.jinja2',
                 snippet=item,
                 lexername=lexername,
-                page=get_page_informations(title=item['title']),
-                )
+                page=get_page_informations(title=item['title']))
     else:
         return abort(404)
 
 
-@app.route("/my_snippets", methods=["GET"])
+@app.route('/my_snippets', methods=['GET'])
 def my_snippets():
+    """The user's snippet list page."""
     if get_user_id() <= 0:
         return abort(403)
-    item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
+    item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date)
+    item = item.execute()
     if item is not None:
         return render_template(
-                "my_snippets.html.jinja2",
+                'my_snippets.html.jinja2',
                 snippets=list(item),
                 page=get_page_informations(
-                    title="My snippets",
-                    menu_active="my_snippets",
-                    ),
-                )
+                    title='My snippets',
+                    menu_active='my_snippets'))
     else:
         return abort(404)
 
 
-@app.route("/add", methods=["GET"])
-def add_snippet_get(def_title="", def_lng="", def_txt=""):
+@app.route('/add', methods=['GET'])
+def add_snippet_get(def_title='', def_lng='', def_txt=''):
+    """The page for adding snippets.
+
+    Keyword arguments:
+        def_title -- The prefilled text of the title field
+        def_lng -- The prefilled text of the language field
+        def_txt -- The prefilled text of the title text
+    """
     return render_template(
-            "edit_snippet.html.jinja2",
+            'edit_snippet.html.jinja2',
             snip_title=def_title,
             snip_language=def_lng,
             snip_text=def_txt,
-            action=url_for("add_snippet_post"),
-            cancel=url_for("index"),
+            action=url_for('add_snippet_post'),
+            cancel=url_for('index'),
             lexerslist=get_lexers_list(),
             page=get_page_informations(
-                title="Add a new Snippet",
-                menu_active="add",
-                ),
-            )
+                title='Add a new Snippet',
+                menu_active='add'))
 
 
-@app.route("/add", methods=["POST"])
+@app.route('/add', methods=['POST'])
 def add_snippet_post():
+    """The page for adding snippets (POST)."""
     if len(request.form['snip_text']) > 0:
         item = Snippet.create({
             'person': get_user_id(),
             'date': datetime.now(),
             'language': request.form['snip_language'],
             'title': request.form['snip_title'],
-            'text': request.form['snip_text'],
-            })
+            'text': request.form['snip_text']})
         item.save()
-        return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
+        return redirect(url_for('get_snippet_by_id', snippet_id=item['id']))
     else:
-        flash("The text field is empty...", "error")
+        flash('The text field is empty...', 'error')
         return add_snippet_get(
                 request.form['snip_title'],
                 request.form['snip_language'],
-                request.form['snip_text'],
-                )
+                request.form['snip_text'])
 
 
-@app.route("/modify/<int:id>", methods=["GET"])
+@app.route('/modify/<int:snippet_id>', methods=['GET'])
 @login_required
-def modify_snippet_get(id):
-    item = Snippet.all.filter(c.id == id).one(None).execute()
+def modify_snippet_get(snippet_id):
+    """The page for modifying snippets.
+
+    Argument:
+        snippet_id -- The id of the snippet to modify
+    """
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
         return render_template(
-                "edit_snippet.html.jinja2",
+                'edit_snippet.html.jinja2',
                 snip_title=item['title'],
                 snip_language=item['language'],
                 snip_text=item['text'],
-                action=url_for("modify_snippet_post", id=id),
-                cancel=url_for("get_snippet_by_id", snippet_id=id),
+                action=url_for('modify_snippet_post', snippet_id=snippet_id),
+                cancel=url_for('get_snippet_by_id', snippet_id=snippet_id),
                 lexerslist=get_lexers_list(),
                 page=get_page_informations(
-                    title="Modify a snippet (%s)" % item['title'])
-                )
+                    title='Modify a snippet (%s)' % item['title']))
     else:
         return abort(404)
 
 
-@app.route("/modify/<int:id>", methods=["POST"])
+@app.route('/modify/<int:snippet_id>', methods=['POST'])
 @login_required
-def modify_snippet_post(id):
-    item = Snippet.all.filter(c.id == id).one(None).execute()
+def modify_snippet_post(snippet_id):
+    """The page for modifying snippets (POST).
+
+    Argument:
+        snippet_id -- The id of the snippet to modify
+    """
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None and len(request.form['snip_text']) > 0:
         item['date'] = datetime.now()
         item['language'] = request.form['snip_language']
@@ -326,38 +361,48 @@ def modify_snippet_post(id):
         item['text'] = request.form['snip_text']
         item.save()
     else:
-        flash("Error when modifying the snippet", "error")
-    return redirect(url_for("get_snippet_by_id", snippet_id=item['id']))
+        flash('Error when modifying the snippet', 'error')
+    return redirect(url_for('get_snippet_by_id', snippet_id=item['id']))
 
 
-@app.route("/delete/<int:id>", methods=["GET"])
+@app.route('/delete/<int:snippet_id>', methods=['GET'])
 @login_required
-def delete_snippet_get(id):
-    item = Snippet.all.filter(c.id == id).one(None).execute()
+def delete_snippet_get(snippet_id):
+    """The page for deleting snippets.
+
+    Argument:
+        snippet_id -- The id of the snippet to delete
+    """
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
         return render_template(
-                "delete.html.jinja2",
-                snip_id=id,
+                'delete.html.jinja2',
+                snip_id=snippet_id,
                 snip_title=item['title'],
-                page=get_page_informations(title="Delete a snippet"),
-                )
+                page=get_page_informations(title='Delete a snippet'))
     else:
         return abort(404)
 
 
-@app.route("/delete/<int:id>", methods=["POST"])
+@app.route('/delete/<int:snippet_id>', methods=['POST'])
 @login_required
-def delete_snippet_post(id):
-    item = Snippet.all.filter(c.id == id).one(None).execute()
+def delete_snippet_post(snippet_id):
+    """The page for deleting snippets (POST).
+
+    Argument:
+        snippet_id -- The id of the snippet to delete
+    """
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
         item.delete()
-        return redirect(url_for("index"))
+        return redirect(url_for('index'))
     else:
         return abort(404)
 
 
 @app.route('/connect', methods=['GET'])
 def get_connect():
+    """The page containing the login form."""
     if get_user_id():
         return redirect(url_for('index'))
     return render_template(
@@ -367,8 +412,10 @@ def get_connect():
 
 @app.route('/connect', methods=['POST'])
 def connect():
+    """The page containing the login form (POST)."""
     item = Person.all.filter(
-        c.login.lower() == request.form['login'].lower()).one(None).execute()
+        c.login.lower() == request.form['login'].lower()).one(None)
+    item = item.execute()
     if item:
         if item['password'] == sha256(request.form['password']).hexdigest():
             session['login'] = item['login']
@@ -381,38 +428,46 @@ def connect():
 
 @app.route('/disconnect', methods=['GET'])
 def disconnect():
+    """Disconnect the logged user."""
     session['login'] = None
     session['id'] = None
-    flash('You are disconnected !', "ok")
-    return redirect(url_for("index"))
+    flash('You are disconnected !', 'ok')
+    return redirect(url_for('index'))
 
 
 @app.route('/register', methods=['GET'])
 def get_register(def_login='', def_email=''):
+    """Page for registering new users.
+
+    Keyword arguments:
+        def_login -- The prefilled value for the login field
+        def_email -- The prefilled value for the login email
+    """
     return render_template(
             'account.html.jinja2',
-            action=url_for("register"),
+            action=url_for('register'),
             login=def_login,
             email=def_email,
-            page=get_page_informations(title="Register"))
+            page=get_page_informations(title='Register'))
 
 
 @app.route('/register', methods=['POST'])
 def register():
+    """Page for registering new users (POST)."""
     item = Person.all.filter(
         c.login.lower() == request.form['login'].lower()).one(None).execute()
     if '' == request.form.get('login', '') \
         or '' == request.form.get('password1', '') \
         or '' == request.form.get('password2', '') \
         or '' == request.form.get('email', '') :
-        flash("Some fields are empty !", "error")
+        flash('Some fields are empty !', 'error')
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
     if item:
         flash("Your login already exists !", "error")
         return get_register(def_login='', def_email=request.form.get('email'))
     if request.form['password1'] != request.form['password2']:
-        flash("Passwords are not same !", "error")
+        flash('Passwords are not same !', 'error')
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
     person = Person.create({
@@ -426,79 +481,94 @@ def register():
     return redirect(url_for("index"))
 
 
-@app.route('/account', methods=['POST'])
-def account():
-    if not session.get("id"):
-        return redirect(url_for("connect"))
-    if '' == request.form.get('login', '') \
-        or '' == request.form.get('email', ''):
-        flash("Some fields are empty !", "error")
-        return get_account(def_login=request.form.get('login'),
-                def_email=request.form.get('email'))
-    person = Person.all.filter(c.login.lower() == \
-        request.form['login'].lower()).one(None).execute()
-    item = Person.all.filter(c.id == session["id"]).one(None).execute()
-    if person is not None and person['login'] != item['login']:
-        flash("Your login already exists !", "error")
-        return get_account(def_login='', def_email=request.form.get('email'))
-    if item is not None:
-        item["login"] = request.form["login"]
-        item["email"] = request.form["email"]
-        if request.form["password1"] or request.form["password2"] :
-            if request.form["password1"] != request.form["password2"]:
-                flash("Passwords are not same !", "error")
-                return get_account(def_login=request.form.get('login'),
-                        def_email=request.form.get('email'))
-            else:
-                item["password"] = sha256(request.form['password1']).hexdigest()
-        item.save()
-        session["login"] = request.form["login"]
-        flash("Your account is been modify !", "ok")
-    return redirect(url_for("index"))
-
-
 @app.route('/account', methods=['GET'])
-def get_account(def_login='', def_email=''):
+def get_account():
+    """Page for modifying the logged user's account."""
     item = Person.all.filter(c.id == get_user_id()).one(None).execute()
     return render_template(
             'account.html.jinja2',
-            action=url_for("account"),
+            action=url_for('account'),
             login=item['login'],
             email=item['email'],
-            page=get_page_informations(title="Manage my account"),
-            person=item
-            )
+            page=get_page_informations(title='Manage my account'),
+            person=item)
+
+
+@app.route('/account', methods=['POST'])
+def account():
+    """Page for modifying the logged user's account (POST)."""
+    if not session.get('id'):
+        return redirect(url_for('connect'))
+    if '' == request.form.get('login', '') \
+        or '' == request.form.get('email', ''):
+        flash('Some fields are empty !', 'error')
+        return get_account()
+    person = Person.all.filter(c.login.lower() == \
+        request.form['login'].lower()).one(None).execute()
+    item = Person.all.filter(c.id == session['id']).one(None).execute()
+    if person is not None and person['login'] != item['login']:
+        flash('Your login already exists !', 'error')
+        return get_account()
+    if item is not None:
+        item['login'] = request.form['login']
+        item['email'] = request.form['email']
+        if request.form['password1'] or request.form['password2'] :
+            if request.form['password1'] != request.form['password2']:
+                flash('Passwords are not same !', 'error')
+                return get_account()
+            else:
+                item['password'] = sha256(request.form['password1']).hexdigest()
+        item.save()
+        session['login'] = request.form['login']
+        flash('Your account is been modify !', 'ok')
+    return redirect(url_for('index'))
+
 
 @app.route('/password', methods=['GET'])
 def forgotten_password_get():
+    """Page for getting a new password."""
     return render_template(
             'forgotten_password.html.jinja2',
-            page=get_page_informations(title="Forgot your password ?"),
-            )
+            page=get_page_informations(title='Forgot your password ?'))
 
 
 @app.route('/password', methods=['POST'])
 def forgotten_password_post():
+    """Verify if the mail can be sent if so send_email"""
     password = get_random_password()
-    item = Person.all.filter(c.login.lower() == request.form["login"].lower()).one(None).execute()
-    if item is not None:
-        item['password'] = sha256(password).hexdigest()
-        item.save()
-        message = u"your new password is: %s" % password
-        subject = u"Forgotten Password"
-        g.smtp_agent.sendmail_alternative(message, subject, item['email'])
-        flash("A mail was sent to : %s" % item['email'], "ok")
-        return redirect(url_for("connect"))
+    item = Person.all.filter(c.login.lower() == request.form['login'].lower())
+    item = item.one(None).execute()
+    if item is not None :
+        if item['email'] == request.form["email"]:
+            item['password'] = sha256(password).hexdigest()
+            item.save()
+            message = u"your new password is: %s" % password
+            send_email(message, item['email'])
+            flash("A mail was sent to : %s" % item['email'], "ok")
+            return redirect(url_for("connect"))
+        else:
+            flash("Invalid email for this login", "error ")
     else:
         flash("This login does not exist", "error")
-        return forgotten_password_get()
+    return forgotten_password_get()
 
 
-def get_random_password():
-    """Get an random 8-character password."""
-    return ''.join(random.sample(string.ascii_lowercase, 8))
+def send_email(message, recipient):
+    """Send a email.
+
+    Arguments:
+        message -- the email message
+        recipient -- the email address where the message will be sent
+    """
+    msg = MIMEText(message)
+    msg['Subject'] = EMAIL_SUBJECT
+    msg['To'] = recipient
+    msg['From'] = EMAIL_FROM
+    smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+    smtp.sendmail(EMAIL_FROM, recipient, msg.as_string())
+    smtp.quit()
 
 
 if __name__ == '__main__':
 #    app.run()
-    app.run(debug=True, port=5042)
+    app.run(debug=True)
