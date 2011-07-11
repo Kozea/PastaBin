@@ -94,25 +94,22 @@ def read_config():
     """Search the configuration file and read it."""
     #Search the configuration file
     search_paths = [
-            pathjoin('./', 'pastabin.json'),
+            pathjoin('/etc', 'pastabin.json'),
             pathjoin(environ.get('HOME', ''), '.pastabin.json'),
-            pathjoin('/etc', 'pastabin.json')]
-    config_path = None
+            pathjoin('./', 'pastabin.json')]
     for path in search_paths:
         if isfile(path):
-            config_path = path
-            break
-    #Read the config file
-    if config_path is not None:
-        try:
-            json_file = open(path, 'r')
-            config = json.load(json_file)
-        except: #Yes, this except is not very pretty...
-            return
-        else:
-            json_file.close()
-        for key in config:
-            CONFIG[key] = str(config[key])
+            #Read the config file
+            if path is not None:
+                try:
+                    json_file = open(path, 'r')
+                    config = json.load(json_file)
+                except Exception:
+                    return
+                else:
+                    json_file.close()
+                for key in config:
+                    CONFIG[key] = str(config[key])
 
 
 app = Flask(__name__)
@@ -251,12 +248,17 @@ def get_user_id():
 
 
 def login_required(func):
-    """If a user goes to a protected page and is not logged in or have not
+    """Check the user rights.
+
+    If a user goes to a protected page and is not logged in or have not
     rights to do some actions like modify or delete, then he should be
-    redirected to the abort page"""
+    redirected to the abort page.
+    """
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        item = Snippet.all.filter(c.id == kwargs['snippet_id']).one(None).execute()
+        """The decorator."""
+        item = Snippet.all.filter(c.id == kwargs['snippet_id'])
+        item = item.one(None).execute()
         if item is not None and item['person'] is not None:
             if item["person"]["id"] == get_user_id() and get_user_id() != 0:
                 return func(*args, **kwargs)
@@ -275,7 +277,7 @@ def index():
 
 @app.route('/snippet/<int:snippet_id>', methods=['GET'])
 @app.route('/s/<int:snippet_id>', methods=['GET'])
-def get_snippet_id(snippet_id):
+def view_snippet(snippet_id):
     """The snippet view page.
 
     Argument:
@@ -347,13 +349,27 @@ def add_snippet_post():
             'title': request.form['snip_title'],
             'text': request.form['snip_text']})
         item.save()
-        return redirect(url_for('get_snippet_by_id', snippet_id=item['id']))
+        return redirect(url_for('view_snippet', snippet_id=item['id']))
     else:
         flash('The text field is empty...', 'error')
         return add_snippet_get(
                 request.form['snip_title'],
                 request.form['snip_language'],
                 request.form['snip_text'])
+
+
+@app.route('/fork/<int:snippet_id>', methods=['GET'])
+def fork_snippet_get(snippet_id):
+    """The page for forking snippets.
+
+    Argument:
+        snippet_id -- The id of the snippet to fork
+    """
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
+    return add_snippet_get(
+            def_title=item['title'],
+            def_lng=item['language'],
+            def_txt=item['text'])
 
 
 @app.route('/modify/<int:snippet_id>', methods=['GET'])
@@ -372,7 +388,7 @@ def modify_snippet_get(snippet_id):
                 snip_language=item['language'],
                 snip_text=item['text'],
                 action=url_for('modify_snippet_post', snippet_id=snippet_id),
-                cancel=url_for('get_snippet_by_id', snippet_id=snippet_id),
+                cancel=url_for('view_snippet', snippet_id=snippet_id),
                 lexerslist=get_lexers_list(),
                 page=get_page_informations(
                     title='Modify a snippet (%s)' % item['title']))
@@ -397,7 +413,7 @@ def modify_snippet_post(snippet_id):
         item.save()
     else:
         flash('Error when modifying the snippet', 'error')
-    return redirect(url_for('get_snippet_by_id', snippet_id=item['id']))
+    return redirect(url_for('view_snippet', snippet_id=item['id']))
 
 
 @app.route('/delete/<int:snippet_id>', methods=['GET'])
@@ -609,3 +625,4 @@ def send_email(message, recipient):
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
+

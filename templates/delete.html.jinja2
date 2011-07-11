@@ -6,7 +6,7 @@
     <p>You really want to delete "<em>{{ snip_title }}</em>" ?</p>
   </fieldset>
   <div class="btn">
-    <a href="{{ url_for("get_snippet_by_id", snippet_id=snip_id) }}">No, it's a mistake!</a>
+    <a href="{{ url_for("view_snippet", snippet_id=snip_id) }}">No, it's a mistake!</a>
     <input type="submit" name="submite" value="Yes, delete it!" />
   </div>
 </form>

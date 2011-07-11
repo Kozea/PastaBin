@@ -1,14 +1,13 @@
 {% extends "_layout.jinja2" %}
 {% block content %}
 
-{% if session.id %}
 <ul>
+  <li class="fork"><a href="{{ url_for("fork_snippet_get", snippet_id=snippet.id) }}">Fork</a></li>
 {% if snippet.person.id == session.get("id", 0) %}
   <li class="modify"><a href="{{ url_for("modify_snippet_get", snippet_id=snippet.id) }}">Modify</a></li>
   <li class="delete"><a href="{{ url_for("delete_snippet_get", snippet_id=snippet.id) }}">Delete</a></li>
 {% endif %}
 </ul>
-{% endif %}
 
 
 <ul class="snippetinfos">
@@ -18,13 +17,12 @@
 </ul>
 {{ snippet.text | safe}}
 
-{% if session.id  %}
 <ul>
+  <li class="fork"><a href="{{ url_for("fork_snippet_get", snippet_id=snippet.id) }}">Fork</a></li>
 {% if snippet.person.id == session.get("id", 0) %}
   <li class="modify"><a href="{{ url_for("modify_snippet_get", snippet_id=snippet.id) }}">Modify</a></li>
   <li class="delete"><a href="{{ url_for("delete_snippet_get", snippet_id=snippet.id) }}">Delete</a></li>
 {% endif %}
 </ul>
-{% endif %}
 
 {% endblock content %}
