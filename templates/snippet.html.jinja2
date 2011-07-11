@@ -4,8 +4,8 @@
 {% if session.id %}
 <ul>
 {% if snippet.person.id == session.get("id", 0) %}
-  <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
-  <li class="delete"><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li>
+  <li class="modify"><a href="{{ url_for("modify_snippet_get", snippet_id=snippet.id) }}">Modify</a></li>
+  <li class="delete"><a href="{{ url_for("delete_snippet_get", snippet_id=snippet.id) }}">Delete</a></li>
 {% endif %}
 </ul>
 {% endif %}
@@ -21,8 +21,8 @@
 {% if session.id  %}
 <ul>
 {% if snippet.person.id == session.get("id", 0) %}
-  <li class="modify"><a href="{{ url_for("modify_snippet_get", id=snippet.id) }}">Modify</a></li>
-  <li class="delete"><a href="{{ url_for("delete_snippet_get", id=snippet.id) }}">Delete</a></li>
+  <li class="modify"><a href="{{ url_for("modify_snippet_get", snippet_id=snippet.id) }}">Modify</a></li>
+  <li class="delete"><a href="{{ url_for("delete_snippet_get", snippet_id=snippet.id) }}">Delete</a></li>
 {% endif %}
 </ul>
 {% endif %}

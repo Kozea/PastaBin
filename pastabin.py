@@ -52,19 +52,28 @@ __app_name__ = 'PastaBin'
 __version__ = '1.0'
 
 
-#CONFIG
-SECRET_KEY = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
-SMTP_SERVER = "smtp.free.fr"
-SMTP_PORT = 25
-EMAIL_FROM = 'no-reply@pastabin.org'
-EMAIL_SUBJECT = u'[PastaBin] New Password'
+CONFIG = {
+        'secret_key': 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT',
+        'email_smtp_server': 'localhost',
+        'email_smtp_port': 25,
+        'email_from_addr': 'no-reply@domaine.com',
+        'email_subject': '[%s] New Password' % __app_name__,
+        'color_keyword': '#b58900',
+        'color_name': '#cb4b16',
+        'color_comment': '#839496',
+        'color_string': '#2aa198',
+        'color_error': '#dc322f',
+        'color_number': '#859900'}
 
 
+import random
+import smtplib
+import json
+from os.path import isfile, join as pathjoin
+from os import environ
 from datetime import datetime
 from hashlib import sha256
 from functools import wraps
-import random
-import smtplib
 from email.mime.text import MIMEText
 
 from flask import (Flask, url_for, render_template, redirect, abort,
@@ -81,20 +90,46 @@ from multicorn.requests import CONTEXT as c
 from access_points import Person, Snippet
 
 
+def read_config():
+    """Search the configuration file and read it."""
+    #Search the configuration file
+    search_paths = [
+            pathjoin('./', 'pastabin.json'),
+            pathjoin(environ.get('HOME', ''), '.pastabin.json'),
+            pathjoin('/etc', 'pastabin.json')]
+    config_path = None
+    for path in search_paths:
+        if isfile(path):
+            config_path = path
+            break
+    #Read the config file
+    if config_path is not None:
+        try:
+            json_file = open(path, 'r')
+            config = json.load(json_file)
+        except: #Yes, this except is not very pretty...
+            return
+        else:
+            json_file.close()
+        for key in config:
+            CONFIG[key] = str(config[key])
+
+
 app = Flask(__name__)
+read_config()
 app.jinja_env.autoescape = True
-app.secret_key = SECRET_KEY
+app.secret_key = CONFIG['secret_key']
 
 
 class PygmentsStyle(Style):
-    """Pygments style based on Solarized."""
+    """Pygments style."""
     styles = {
-        Keyword: '#b58900',
-        Name: '#cb4b16',
-        Comment: '#839496',
-        String: '#2aa198',
-        Error: '#dc322f',
-        Number: '#859900'}
+        Keyword: CONFIG['color_keyword'],
+        Name: CONFIG['color_name'],
+        Comment: CONFIG['color_comment'],
+        String: CONFIG['color_string'],
+        Error: CONFIG['color_error'],
+        Number: CONFIG['color_number']}
 
 
 def colorize(language, title, text):
@@ -175,8 +210,8 @@ def check_title(title):
         return title
 
 
-def get_page_informations(title='Unknown', menu_active=None):
-    """Retun various informations like the menu, the page title,...
+def get_page_informations(title="Unknown", menu_active=None):
+    """Return various informations like the menu, the page title,...
 
     Arguments:
         title -- The page title
@@ -216,9 +251,12 @@ def get_user_id():
 
 
 def login_required(func):
+    """If a user goes to a protected page and is not logged in or have not
+    rights to do some actions like modify or delete, then he should be
+    redirected to the abort page"""
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        item = Snippet.all.filter(c.id == kwargs['id']).one(None).execute()
+        item = Snippet.all.filter(c.id == kwargs['snippet_id']).one(None).execute()
         if item is not None and item['person'] is not None:
             if item["person"]["id"] == get_user_id() and get_user_id() != 0:
                 return func(*args, **kwargs)
@@ -318,23 +356,23 @@ def add_snippet_post():
                 request.form['snip_text'])
 
 
+@app.route('/modify/<int:snippet_id>', methods=['GET'])
 @login_required
-@app.route('/modify/<int:id>', methods=['GET'])
-def modify_snippet_get(id):
+def modify_snippet_get(snippet_id):
     """The page for modifying snippets.
 
     Argument:
-        id -- The id of the snippet to modify
+        snippet_id -- The id of the snippet to modify
     """
-    item = Snippet.all.filter(c.id == id).one(None).execute()
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
         return render_template(
                 'edit_snippet.html.jinja2',
                 snip_title=item['title'],
                 snip_language=item['language'],
                 snip_text=item['text'],
-                action=url_for('modify_snippet_post', id=id),
-                cancel=url_for('get_snippet_by_id', snippet_id=id),
+                action=url_for('modify_snippet_post', snippet_id=snippet_id),
+                cancel=url_for('get_snippet_by_id', snippet_id=snippet_id),
                 lexerslist=get_lexers_list(),
                 page=get_page_informations(
                     title='Modify a snippet (%s)' % item['title']))
@@ -342,15 +380,15 @@ def modify_snippet_get(id):
         return abort(404)
 
 
+@app.route('/modify/<int:snippet_id>', methods=['POST'])
 @login_required
-@app.route('/modify/<int:id>', methods=['POST'])
-def modify_snippet_post(id):
+def modify_snippet_post(snippet_id):
     """The page for modifying snippets (POST).
 
     Argument:
-        id -- The id of the snippet to modify
+        snippet_id -- The id of the snippet to modify
     """
-    item = Snippet.all.filter(c.id == id).one(None).execute()
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None and len(request.form['snip_text']) > 0:
         item['date'] = datetime.now()
         item['language'] = request.form['snip_language']
@@ -362,34 +400,34 @@ def modify_snippet_post(id):
     return redirect(url_for('get_snippet_by_id', snippet_id=item['id']))
 
 
+@app.route('/delete/<int:snippet_id>', methods=['GET'])
 @login_required
-@app.route('/delete/<int:id>', methods=['GET'])
-def delete_snippet_get(id):
+def delete_snippet_get(snippet_id):
     """The page for deleting snippets.
 
     Argument:
-        id -- The id of the snippet to delete
+        snippet_id -- The id of the snippet to delete
     """
-    item = Snippet.all.filter(c.id == id).one(None).execute()
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
         return render_template(
                 'delete.html.jinja2',
-                snip_id=id,
+                snip_id=snippet_id,
                 snip_title=item['title'],
                 page=get_page_informations(title='Delete a snippet'))
     else:
         return abort(404)
 
 
+@app.route('/delete/<int:snippet_id>', methods=['POST'])
 @login_required
-@app.route('/delete/<int:id>', methods=['POST'])
-def delete_snippet_post(id):
+def delete_snippet_post(snippet_id):
     """The page for deleting snippets (POST).
 
     Argument:
-        id -- The id of the snippet to delete
+        snippet_id -- The id of the snippet to delete
     """
-    item = Snippet.all.filter(c.id == id).one(None).execute()
+    item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
         item.delete()
         return redirect(url_for('index'))
@@ -413,22 +451,14 @@ def connect():
     item = Person.all.filter(
         c.login.lower() == request.form['login'].lower()).one(None)
     item = item.execute()
-    if item is not None:
-        if '' == request.form.get('login', '') \
-        or '' == request.form.get('password', ''):
-            flash('Invalid login or password !', 'error')
-            return redirect(url_for('connect'))
+    if item:
         if item['password'] == sha256(request.form['password']).hexdigest():
             session['login'] = item['login']
             session['id'] = item['id']
             flash('Welcome %s !' % escape(session['login']), 'ok')
             return redirect(url_for('index'))
-        else:
-            flash('Invalid login or password !', 'error')
-            return redirect(url_for('connect'))
-    else:
-        flash('Invalid login or password !', 'error')
-        return redirect(url_for('connect'))
+    flash('Invalid login or password !', 'error')
+    return redirect(url_for('connect'))
 
 
 @app.route('/disconnect', methods=['GET'])
@@ -459,6 +489,8 @@ def get_register(def_login='', def_email=''):
 @app.route('/register', methods=['POST'])
 def register():
     """Page for registering new users (POST)."""
+    item = Person.all.filter(
+        c.login.lower() == request.form['login'].lower()).one(None).execute()
     if '' == request.form.get('login', '') \
         or '' == request.form.get('password1', '') \
         or '' == request.form.get('password2', '') \
@@ -466,25 +498,22 @@ def register():
         flash('Some fields are empty !', 'error')
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
+    if item:
+        flash("Your login already exists !", "error")
+        return get_register(def_login='', def_email=request.form.get('email'))
     if request.form['password1'] != request.form['password2']:
         flash('Passwords are not same !', 'error')
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
-    item = Person.all.filter(c.login.lower() == \
-        request.form['login'].lower()).one(None).execute()
-    if item is not None:
-        flash('Your login already exists !', 'error')
-        return get_register(def_login='', def_email=request.form.get('email'))
-    else:
-        person = Person.create({
-            'login': request.form['login'],
-            'password': sha256(request.form['password2']).hexdigest(),
-            'email': request.form['email']})
-        person.save()
-        session['login'] = person['login']
-        session['id'] = person['id']
-    flash('Welcome %s !' % escape(session['login']), 'ok')
-    return redirect(url_for('index'))
+    person = Person.create({
+        'login': request.form['login'],
+        'password': sha256(request.form['password2']).hexdigest(),
+        'email': request.form['email']})
+    person.save()
+    session['login'] = person['login']
+    session['id'] = person['id']
+    flash("Welcome %s !" % escape(session["login"]), "ok")
+    return redirect(url_for("index"))
 
 
 @app.route('/account', methods=['GET'])
@@ -567,15 +596,16 @@ def send_email(message, recipient):
         recipient -- the email address where the message will be sent
     """
     msg = MIMEText(message)
-    msg['Subject'] = EMAIL_SUBJECT
+    msg['Subject'] = CONFIG['email_subject']
     msg['To'] = recipient
-    msg['From'] = EMAIL_FROM
-    smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-    smtp.sendmail(EMAIL_FROM, recipient, msg.as_string())
+    msg['From'] = CONFIG['email_from_addr']
+    smtp = smtplib.SMTP(
+            CONFIG['email_smtp_server'],
+            CONFIG['email_smtp_port'])
+    smtp.sendmail(CONFIG['email_from_addr'], recipient, msg.as_string())
     smtp.quit()
 
 
 if __name__ == '__main__':
 #    app.run()
     app.run(debug=True)
-
