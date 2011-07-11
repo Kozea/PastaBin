@@ -51,12 +51,11 @@ from functools import wraps
 from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
 from pygments import highlight
+from pygments.util import ClassNotFound as LexerNotFound
 from pygments.formatters import HtmlFormatter
-from pygments.lexers import get_lexer_by_name
-from pygments.lexers import get_lexer_for_filename
-from pygments.lexers import guess_lexer
+from pygments.lexers import get_all_lexers, get_lexer_by_name, get_lexer_for_filename, guess_lexer
 from pygments.style import Style
-from pygments.token import Keyword, Name, Comment, String, Error, Number
+from pygments.token import *
 
 from access_points import *
 from utils.mail import SmtpAgent
@@ -76,6 +75,56 @@ class PygmentsStyle(Style):
         String: '#2aa198',
         Error: '#dc322f',
         Number: '#859900'}
+
+
+def colorize(language, title, text):
+    """Colorize the text syntax
+
+    Guess the language of the text and colorize it.
+
+    Returns a tuple containing the colorized text and the language name.
+    """
+    formatter = HtmlFormatter(
+            linenos=True,
+            style=PygmentsStyle,
+            noclasses=True,
+            nobackground=True)
+    #Try to get the lexer by name
+    try:
+        lexer = get_lexer_by_name(language.lower())
+        return highlight(text, lexer, formatter), lexer.name
+    except LexerNotFound:
+        pass
+    #Try to get the lexer by filename
+    try:
+        lexer = get_lexer_for_filename(title.lower())
+        return highlight(text, lexer, formatter), lexer.name
+    except LexerNotFound:
+        pass
+    #Try to guess the lexer from the text
+    try:
+        lexer = guess_lexer(text)
+        if lexer.analyse_text(text) > .3:
+            return highlight(text, lexer, formatter), lexer.name
+    except LexerNotFound:
+        pass
+    #Fallback to the plain/text lexer
+    lexer = get_lexer_by_name("text")
+    return highlight(text, lexer, formatter), lexer.name
+
+
+def get_lexers_list():
+    """Get the supported language list
+
+    Returns a list of tuple containing the language Displayable name
+    and the language lexer name:
+        [("Display Name", "Lexer Name"),]
+    """
+    lexers_list = []
+    for lexer in get_all_lexers():
+        lexers_list.append((lexer[0], lexer[1][0]))
+    return lexers_list
+
 
 @app.before_request
 def constants():
@@ -172,27 +221,15 @@ def index():
 def get_snippet_by_id(snippet_id):
     item = Snippet.all.filter(c.id == snippet_id).one(None).execute()
     if item is not None:
-        lexer = None
-        try:
-            lexer = get_lexer_by_name(item['language'].lower())
-        except:
-            try:
-                lexer = get_lexer_for_filename(item['title'].lower())
-            except:
-                try:
-                    lexer = guess_lexer(item['text'])
-                except:
-                    lexer = get_lexer_by_name("text")
-        formatter = HtmlFormatter(
-                linenos=True,
-                style=PygmentsStyle,
-                noclasses=True,
-                nobackground=True,
+        item['text'], lexername = colorize(
+                item['language'],
+                item['title'],
+                item['text'],
                 )
-        item['text'] = highlight(item['text'], lexer, formatter)
         return render_template(
                 "snippet.html.jinja2",
                 snippet=item,
+                lexername=lexername,
                 page=get_page_informations(title=item['title']),
                 )
     else:
@@ -226,6 +263,7 @@ def add_snippet_get(def_title="", def_lng="", def_txt=""):
             snip_text=def_txt,
             action=url_for("add_snippet_post"),
             cancel=url_for("index"),
+            lexerslist=get_lexers_list(),
             page=get_page_informations(
                 title="Add a new Snippet",
                 menu_active="add",
@@ -266,6 +304,7 @@ def modify_snippet_get(id):
                 snip_text=item['text'],
                 action=url_for("modify_snippet_post", id=id),
                 cancel=url_for("get_snippet_by_id", snippet_id=id),
+                lexerslist=get_lexers_list(),
                 page=get_page_informations(
                     title="Modify a snippet (%s)" % item['title'])
                 )
