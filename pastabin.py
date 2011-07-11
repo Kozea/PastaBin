@@ -45,10 +45,9 @@ from datetime import datetime
 from hashlib import sha256
 from functools import wraps
 import random
-import string
 
-from flask import Flask, url_for, render_template, g, session
-from jinja2.utils import Markup
+from flask import (Flask, url_for, render_template, redirect, abort,
+        flash, escape, g, session, request)
 from pygments import highlight
 from pygments.util import ClassNotFound as LexerNotFound
 from pygments.formatters import HtmlFormatter
@@ -56,7 +55,6 @@ from pygments.lexers import (get_all_lexers, get_lexer_by_name,
         get_lexer_for_filename, guess_lexer)
 from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, Number
-from multicorn.declarative import declare, Property
 from multicorn.requests import CONTEXT as c
 
 from access_points import Person, Snippet
@@ -130,7 +128,7 @@ def get_lexers_list():
 
 def get_random_password():
     """Get an random 8-character password."""
-    return ''.join(random.sample(string.ascii_lowercase, 8))
+    return ''.join(random.sample("abcdefghijklmnopqrstuvwxyz0123456789", 8))
 
 
 @app.before_request
@@ -140,12 +138,14 @@ def constants():
 
 
 @app.template_filter('date_format')
-def pretty_datetime(d):
-    return d.strftime('%A %d %B %Y @ %H:%M:%S').decode('utf-8')
+def pretty_datetime(date):
+    """Convert the date into a better human readable format."""
+    return date.strftime('%A %d %B %Y @ %H:%M:%S').decode('utf-8')
 
 
 @app.template_filter('snip_user')
 def snip_user(user):
+    """Check the user's name"""
     if type(user) != unicode:
         return 'Guest'
     else:
@@ -154,6 +154,7 @@ def snip_user(user):
 
 @app.template_filter('check_title')
 def check_title(title):
+    """Check the snippet's title"""
     if title == '':
         return 'Unamed snippet'
     else:
@@ -199,13 +200,13 @@ def get_user_id():
     return session.get('id', 0)
 
 
-def login_required(f):
-    @wraps(f)
+def login_required(func):
+    @wraps(func)
     def decorated_function(*args, **kwargs):
         item = Snippet.all.filter(c.id == kwargs['id']).one(None).execute()
         if item is not None and item['person'] is not None:
             if item["person"]["id"] == get_user_id() and get_user_id() != 0:
-                return f(*args, **kwargs)
+                return func(*args, **kwargs)
         return abort(403)
     return decorated_function
 
@@ -247,7 +248,8 @@ def my_snippets():
     """The user's snippet list page."""
     if get_user_id() <= 0:
         return abort(403)
-    item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date).execute()
+    item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date)
+    item = item.execute()
     if item is not None:
         return render_template(
                 'my_snippets.html.jinja2',
@@ -471,7 +473,7 @@ def register():
 
 
 @app.route('/account', methods=['GET'])
-def get_account(def_login='', def_email=''):
+def get_account():
     """Page for modifying the logged user's account."""
     item = Person.all.filter(c.id == get_user_id()).one(None).execute()
     return render_template(
@@ -491,22 +493,20 @@ def account():
     if '' == request.form.get('login', '') \
         or '' == request.form.get('email', ''):
         flash('Some fields are empty !', 'error')
-        return get_account(def_login=request.form.get('login'),
-                def_email=request.form.get('email'))
+        return get_account()
     person = Person.all.filter(c.login.lower() == \
         request.form['login'].lower()).one(None).execute()
     item = Person.all.filter(c.id == session['id']).one(None).execute()
     if person is not None and person['login'] != item['login']:
         flash('Your login already exists !', 'error')
-        return get_account(def_login='', def_email=request.form.get('email'))
+        return get_account()
     if item is not None:
         item['login'] = request.form['login']
         item['email'] = request.form['email']
         if request.form['password1'] or request.form['password2'] :
             if request.form['password1'] != request.form['password2']:
                 flash('Passwords are not same !', 'error')
-                return get_account(def_login=request.form.get('login'),
-                        def_email=request.form.get('email'))
+                return get_account()
             else:
                 item['password'] = sha256(request.form['password1']).hexdigest()
         item.save()
@@ -527,7 +527,8 @@ def forgotten_password_get():
 def forgotten_password_post():
     """Page for getting a new password (POST)."""
     password = get_random_password()
-    item = Person.all.filter(c.login.lower() == request.form['login'].lower()).one(None).execute()
+    item = Person.all.filter(c.login.lower() == request.form['login'].lower())
+    item = item.one(None).execute()
     if item is not None:
         item['password'] = sha256(password).hexdigest()
         item.save()
