@@ -204,7 +204,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         item = Snippet.all.filter(c.id == kwargs['id']).one(None).execute()
-        if item['person'] is not None:
+        if item is not None and item['person'] is not None:
             if item["person"]["id"] == get_user_id() and get_user_id() != 0:
                 return f(*args, **kwargs)
         return abort(403)
@@ -369,7 +369,7 @@ def get_connect():
 def connect():
     item = Person.all.filter(
         c.login.lower() == request.form['login'].lower()).one(None).execute()
-    if item is not None:
+    if item:
         if item['password'] == sha256(request.form['password']).hexdigest():
             session['login'] = item['login']
             session['id'] = item['id']
@@ -399,6 +399,8 @@ def get_register(def_login='', def_email=''):
 
 @app.route('/register', methods=['POST'])
 def register():
+    item = Person.all.filter(
+        c.login.lower() == request.form['login'].lower()).one(None).execute()
     if '' == request.form.get('login', '') \
         or '' == request.form.get('password1', '') \
         or '' == request.form.get('password2', '') \
@@ -406,26 +408,20 @@ def register():
         flash("Some fields are empty !", "error")
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
-
+    if item:
+        flash("Your login already exists !", "error")
+        return get_register(def_login='', def_email=request.form.get('email'))
     if request.form['password1'] != request.form['password2']:
         flash("Passwords are not same !", "error")
         return get_register(def_login=request.form.get('login'),
                 def_email=request.form.get('email'))
-
-    item = Person.all.filter(c.login.lower() == \
-        request.form['login'].lower()).one(None).execute()
-    if item is not None:
-        flash("Your login already exists !", "error")
-        return get_register(def_login='', def_email=request.form.get('email'))
-    else:
-        person = Person.create({
-            'login': request.form['login'],
-            'password': sha256(request.form['password2']).hexdigest(),
-            'email': request.form['email'],
-            })
-        person.save()
-        session['login'] = person['login']
-        session['id'] = person['id']
+    person = Person.create({
+        'login': request.form['login'],
+        'password': sha256(request.form['password2']).hexdigest(),
+        'email': request.form['email']})
+    person.save()
+    session['login'] = person['login']
+    session['id'] = person['id']
     flash("Welcome %s !" % escape(session["login"]), "ok")
     return redirect(url_for("index"))
 
