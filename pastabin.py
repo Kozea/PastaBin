@@ -52,19 +52,28 @@ __app_name__ = 'PastaBin'
 __version__ = '1.0'
 
 
-#CONFIG
-SECRET_KEY = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
-SMTP_SERVER = "smtp.free.fr"
-SMTP_PORT = 25
-EMAIL_FROM = 'no-reply@pastabin.org'
-EMAIL_SUBJECT = u'[PastaBin] New Password'
+CONFIG = {
+        'secret_key': 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT',
+        'email_smtp_server': 'localhost',
+        'email_smtp_port': 25,
+        'email_from_addr': 'no-reply@domaine.com',
+        'email_subject': '[%s] New Password' % __app_name__,
+        'color_keyword': '#b58900',
+        'color_name': '#cb4b16',
+        'color_comment': '#839496',
+        'color_string': '#2aa198',
+        'color_error': '#dc322f',
+        'color_number': '#859900'}
 
 
+import random
+import smtplib
+import json
+from os.path import isfile, join as pathjoin
+from os import environ
 from datetime import datetime
 from hashlib import sha256
 from functools import wraps
-import random
-import smtplib
 from email.mime.text import MIMEText
 
 from flask import (Flask, url_for, render_template, redirect, abort,
@@ -81,20 +90,46 @@ from multicorn.requests import CONTEXT as c
 from access_points import Person, Snippet
 
 
+def read_config():
+    """Search the configuration file and read it."""
+    #Search the configuration file
+    search_paths = [
+            pathjoin('./', 'pastabin.json'),
+            pathjoin(environ.get('HOME', ''), '.pastabin.json'),
+            pathjoin('/etc', 'pastabin.json')]
+    config_path = None
+    for path in search_paths:
+        if isfile(path):
+            config_path = path
+            break
+    #Read the config file
+    if config_path is not None:
+        try:
+            json_file = open(path, 'r')
+            config = json.load(json_file)
+        except: #Yes, this except is not very pretty...
+            return
+        else:
+            json_file.close()
+        for key in config:
+            CONFIG[key] = str(config[key])
+
+
 app = Flask(__name__)
+read_config()
 app.jinja_env.autoescape = True
-app.secret_key = SECRET_KEY
+app.secret_key = CONFIG['secret_key']
 
 
 class PygmentsStyle(Style):
-    """Pygments style based on Solarized."""
+    """Pygments style."""
     styles = {
-        Keyword: '#b58900',
-        Name: '#cb4b16',
-        Comment: '#839496',
-        String: '#2aa198',
-        Error: '#dc322f',
-        Number: '#859900'}
+        Keyword: CONFIG['color_keyword'],
+        Name: CONFIG['color_name'],
+        Comment: CONFIG['color_comment'],
+        String: CONFIG['color_string'],
+        Error: CONFIG['color_error'],
+        Number: CONFIG['color_number']}
 
 
 def colorize(language, title, text):
@@ -567,11 +602,13 @@ def send_email(message, recipient):
         recipient -- the email address where the message will be sent
     """
     msg = MIMEText(message)
-    msg['Subject'] = EMAIL_SUBJECT
+    msg['Subject'] = CONFIG['email_subject']
     msg['To'] = recipient
-    msg['From'] = EMAIL_FROM
-    smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-    smtp.sendmail(EMAIL_FROM, recipient, msg.as_string())
+    msg['From'] = CONFIG['email_from_addr']
+    smtp = smtplib.SMTP(
+            CONFIG['email_smtp_server'],
+            CONFIG['email_smtp_port'])
+    smtp.sendmail(CONFIG['email_from_addr'], recipient, msg.as_string())
     smtp.quit()
 
 

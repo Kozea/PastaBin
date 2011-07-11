@@ -1,0 +1,13 @@
+{
+'secret_key': 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT',
+'email_smtp_server': 'localhost',
+'email_smtp_port': 25,
+'email_from_addr': 'no-reply@domaine.com',
+'email_subject': '[PastaBin] New Password',
+'color_keyword': '#b58900',
+'color_name': '#cb4b16',
+'color_comment': '#839496',
+'color_string': '#2aa198',
+'color_error': '#dc322f',
+'color_number': '#859900'
+}
