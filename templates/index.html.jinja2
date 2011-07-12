@@ -7,7 +7,7 @@
 {% if snippets %}
   <ul class="index">
   {% for snippet in snippets %}
-    <li><a href="{{ url_for("view_snippet", snippet_id=snippet.id)}}" >{{ snippet.title |check_title}} <span>(posted by {{ snippet.person.login | check_user }}, on {{ snippet.date | date_format }})</span></a></li>
+    <li><a href="{{ url_for("view_snippet", snippet_id=snippet.id)}}" >{{ snippet.title or 'Unnamed snippet' }} <span>(posted by {{ snippet.person.login or 'Guest' }}, on {{ snippet.date | date_format }})</span></a></li>
   {% endfor %}
     </ul>
 {% else %}
