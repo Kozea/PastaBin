@@ -78,7 +78,7 @@ from email.mime.text import MIMEText
 from socket import error as socketerror
 
 from flask import (Flask, url_for, render_template, redirect, abort,
-        flash, escape, session, request)
+        flash, session, request)
 from pygments import highlight
 from pygments.util import ClassNotFound as LexerNotFound
 from pygments.formatters import HtmlFormatter
@@ -100,7 +100,7 @@ def read_config():
             pathjoin('./', 'pastabin.json')]
     for path in search_paths:
         if isfile(path):
-            #Read the config file
+            #Read the configuration file
             if path is not None:
                 try:
                     json_file = open(path, 'r')
@@ -190,8 +190,8 @@ def pretty_datetime(date):
     return date.strftime('%A %d %B %Y @ %H:%M:%S').decode('utf-8')
 
 
-@app.template_filter('snip_user')
-def snip_user(user):
+@app.template_filter('check_user')
+def check_user(user):
     """Check the user's name"""
     if type(user) != unicode:
         return 'Guest'
@@ -203,9 +203,10 @@ def snip_user(user):
 def check_title(title):
     """Check the snippet's title"""
     if title == '':
-        return 'Unamed snippet'
+        return 'Unnamed snippet'
     else:
         return title
+
 
 def send_email(message, recipient):
     """Send a email.
@@ -282,7 +283,7 @@ def login_required(func):
     """
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        """The decorator."""
+        """The decorated function."""
         item = Snippet.all.filter(c.id == kwargs['snippet_id'])
         item = item.one(None).execute()
         if item is not None and item['person'] is not None:
@@ -327,6 +328,7 @@ def view_snippet(snippet_id):
 @app.route('/my_snippets', methods=['GET'])
 def my_snippets():
     """The user's snippet list page."""
+    #Check if the user is logged
     if get_user_id() <= 0:
         return abort(403)
     item = Snippet.all.filter(c.person.id == get_user_id()).sort(-c.date)
@@ -377,7 +379,7 @@ def add_snippet_post():
         item.save()
         return redirect(url_for('view_snippet', snippet_id=item['id']))
     else:
-        flash('The text field is empty...', 'error')
+        flash('You can\'t post empty snippets !', 'error')
         return add_snippet_get(
                 request.form['snip_title'],
                 request.form['snip_language'],
@@ -480,6 +482,7 @@ def delete_snippet_post(snippet_id):
 @app.route('/connect', methods=['GET'])
 def get_connect():
     """The page containing the login form."""
+    #if the user is already connected, redirect him
     if get_user_id():
         return redirect(url_for('index'))
     return render_template(
@@ -491,16 +494,17 @@ def get_connect():
 def connect():
     """The page containing the login form (POST)."""
     item = Person.all.filter(
-        c.login.lower() == request.form['login'].lower()).one(None)
-    item = item.execute()
-    if item:
-        if item['password'] == sha256(request.form['password']).hexdigest():
-            session['login'] = item['login']
-            session['id'] = item['id']
-            flash('Welcome %s !' % escape(session['login']), 'ok')
-            return redirect(url_for('index'))
-    flash('Invalid login or password !', 'error')
-    return redirect(url_for('connect'))
+            (c.login.lower() == request.form['login'].lower())
+            & (c.password == sha256(request.form['password']).hexdigest()))
+    item = item.one(None).execute()
+    if item is not None:
+        session['login'] = item['login']
+        session['id'] = item['id']
+        flash('Welcome %s !' % session['login'], 'ok')
+        return redirect(url_for('index'))
+    else:
+        flash('Invalid login or password !', 'error')
+        return redirect(url_for('connect'))
 
 
 @app.route('/disconnect', methods=['GET'])
@@ -531,30 +535,32 @@ def get_register(def_login='', def_email=''):
 @app.route('/register', methods=['POST'])
 def register():
     """Page for registering new users (POST)."""
-    item = Person.all.filter(
-        c.login.lower() == request.form['login'].lower()).one(None).execute()
+    #Check if all fields are filled and if the passwords are equal
     if '' in (request.form.get('login', ''),
         request.form.get('password1', ''),
         request.form.get('password2', ''),
-        request.form.get('email', '')):
-        flash('Some fields are empty !', 'error')
-        return get_register(def_login=request.form.get('login'),
-                def_email=request.form.get('email'))
-    if item:
-        flash('Your login already exists !', 'error')
-        return get_register(def_login='', def_email=request.form.get('email'))
-    if request.form['password1'] != request.form['password2']:
-        flash('Passwords are not same !', 'error')
-        return get_register(def_login=request.form.get('login'),
-                def_email=request.form.get('email'))
+        request.form.get('email', '')) \
+     or request.form['password1'] != request.form['password2']:
+        flash('Some fields are empty or passwords are not the same !', 'error')
+        return get_register(
+                def_login=request.form['login'],
+                def_email=request.form['email'])
+    item = Person.all.filter(c.login.lower() == request.form['login'].lower())
+    item = item.one(None).execute()
+    #Check if the login already exists
+    if item is not None:
+        flash('The login already exists !', 'error')
+        return get_register(def_email=request.form['email'])
+    #Register the user
     person = Person.create({
         'login': request.form['login'],
         'password': sha256(request.form['password2']).hexdigest(),
         'email': request.form['email']})
     person.save()
+    #Login the user
     session['login'] = person['login']
     session['id'] = person['id']
-    flash('Welcome %s !' % escape(session['login']), 'ok')
+    flash('Welcome %s !' % session['login'], 'ok')
     return redirect(url_for('index'))
 
 
@@ -574,30 +580,35 @@ def get_account():
 @app.route('/account', methods=['POST'])
 def account():
     """Page for modifying the logged user's account (POST)."""
+    #Check if the user is logged
     if not session.get('id'):
-        return redirect(url_for('connect'))
-    if '' == request.form.get('login', '') \
-        or '' == request.form.get('email', ''):
-        flash('Some fields are empty !', 'error')
+        return abort(403)
+    #Check if the login field or the email field is empty, and check
+    #if the two password fields are the same
+    if '' in (request.form['login'], request.form['email']) \
+    or request.form['password1'] != request.form['password2']:
+        flash('Some fields are empty or passwords are not the same !', 'error')
         return get_account()
-    person = Person.all.filter(c.login.lower() == \
-        request.form['login'].lower()).one(None).execute()
+    #Check if the login already exists in th DB and if the
+    #wanted login is not Guest
+    person = Person.all.filter(c.login.lower() == request.form['login'].lower())
+    person = person.one(None).execute()
+    if person is not None \
+    and request.form['login'].lower() !=  session.get('login', '').lower() \
+    or request.form['login'].lower() == 'guest':
+        flash('The login already exists !', 'error')
+        return get_account()
+    #Update the account
     item = Person.all.filter(c.id == session['id']).one(None).execute()
-    if person is not None and person['login'] != item['login']:
-        flash('Your login already exists !', 'error')
-        return get_account()
     if item is not None:
         item['login'] = request.form['login']
         item['email'] = request.form['email']
-        if request.form['password1'] or request.form['password2'] :
-            if request.form['password1'] != request.form['password2']:
-                flash('Passwords are not same !', 'error')
-                return get_account()
-            else:
-                item['password'] = sha256(request.form['password1']).hexdigest()
+        #If the user fill the passwords, check them and update the password
+        if request.form['password1'] != '':
+            item['password'] = sha256(request.form['password1']).hexdigest()
         item.save()
         session['login'] = request.form['login']
-        flash('Your account is been modify !', 'ok')
+        flash('Your account has been modified !', 'ok')
     return redirect(url_for('index'))
 
 
@@ -612,29 +623,24 @@ def forgotten_password_get():
 @app.route('/password', methods=['POST'])
 def forgotten_password_post():
     """Verify if the mail can be sent if so send_email"""
-    password = get_random_password()
     item = Person.all.filter(c.login.lower() == request.form['login'].lower())
     item = item.one(None).execute()
-    if item is not None :
-        if item['email'] == request.form['email']:
-            item['password'] = sha256(password).hexdigest()
-            item.save()
-            message = u'your new password is: %s' % password
-            if send_email(message, item['email']):
-                flash('A mail was sent to : %s' % item['email'], 'ok')
-                return redirect(url_for('connect'))
-            else:
-                flash('An error occured while sending the email', 'error')
-                return forgotten_password_get()
+    if item is not None and item['email'] == request.form['email']:
+        password = get_random_password()
+        item['password'] = sha256(password).hexdigest()
+        item.save()
+        message = 'your new password is: %s' % password
+        if send_email(message, item['email']):
+            flash('A mail was sent to : %s' % item['email'], 'ok')
+            return redirect(url_for('connect'))
         else:
-            flash('Invalid email for this login', 'error')
+            flash('An error occurred while sending the email', 'error')
+            return forgotten_password_get()
     else:
-        flash('This login does not exist', 'error')
+        flash('Login and email mismatch.', 'error')
     return forgotten_password_get()
 
 
-
 if __name__ == '__main__':
-#    app.run()
-    app.run(debug=True)
+    app.run()
 
