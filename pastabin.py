@@ -181,7 +181,7 @@ def get_lexers_list():
 
 def get_random_password():
     """Get an random 8-character password."""
-    return ''.join(random.sample("abcdefghijklmnopqrstuvwxyz0123456789", 8))
+    return ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
 
 
 @app.template_filter('date_format')
@@ -230,7 +230,7 @@ def send_email(message, recipient):
     return True
 
 
-def get_page_informations(title="Unknown", menu_active=None):
+def get_page_informations(title='Unknown', menu_active=None):
     """Return various informations like the menu, the page title,...
 
     Arguments:
@@ -286,7 +286,7 @@ def login_required(func):
         item = Snippet.all.filter(c.id == kwargs['snippet_id'])
         item = item.one(None).execute()
         if item is not None and item['person'] is not None:
-            if item["person"]["id"] == get_user_id() and get_user_id() != 0:
+            if item['person']['id'] == get_user_id() and get_user_id() != 0:
                 return func(*args, **kwargs)
         return abort(403)
     return decorated_function

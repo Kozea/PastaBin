@@ -53,7 +53,7 @@ mc = Multicorn()
 
 
 @mc.register
-@declare(Alchemy, identity_properties=["id"], url="sqlite:///pastabin.db")
+@declare(Alchemy, identity_properties=['id'], url='sqlite:///pastabin.db')
 class Person(object):
     """This corn contains the users informations"""
     id = Property(type=int)
@@ -63,7 +63,7 @@ class Person(object):
 
 
 @mc.register
-@declare(Alchemy, identity_properties=["id"], url="sqlite:///pastabin.db")
+@declare(Alchemy, identity_properties=['id'], url='sqlite:///pastabin.db')
 class Snippet(object):
     """This corn contains the snippets"""
     id = Property(type=int)
