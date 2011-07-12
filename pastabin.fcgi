@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import flup
-import pastabin
+from pastabin import app
+from flup.server.fcgi import WSGIServer
 
-flup(pastabin.app)
+WSGIServer(app, debug=False).run()
