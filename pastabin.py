@@ -554,7 +554,7 @@ def account():
         item['login'] = request.form['login']
         item['email'] = request.form['email']
         #If the user fill the passwords, check them and update the password
-        if not request.form['password1']:
+        if request.form['password1']:
             item['password'] = sha256(request.form['password1']).hexdigest()
         item.save()
         session['login'] = request.form['login']
