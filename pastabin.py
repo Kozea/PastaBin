@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
    ###########################################################################
@@ -579,9 +579,9 @@ def forgotten_password_post():
     if item and item['email'] == request.form['email']:
         password = get_random_password()
         item['password'] = sha256(password).hexdigest()
-        item.save()
         message = 'Your new password is: %s' % password
         if send_email(message, item['email']):
+            item.save()
             flash('An email was sent to: %s' % item['email'], 'ok')
             return redirect(url_for('connect'))
         else:
