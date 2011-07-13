@@ -1,0 +1,193 @@
+/*
+  -------------
+  - Font Face -
+  -------------
+*/
+@font-face {
+  font-family: "titre";
+  src: url(OCRAStd.otf);
+}
+
+/*
+  ---------------
+  - HTML / Body -
+  ---------------
+*/
+html{
+  border-top: 15px solid #790000;
+  margin: 0;
+  width: 100%;
+}
+
+body{
+background: url(img/logo.png) no-repeat top left;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9em;
+  margin: 0;
+
+}
+
+/*
+  ----------
+  - Common -
+  ----------
+*/
+header, nav, section{
+  margin: 0 10%;
+}
+
+a{
+  text-decoration: none;
+}
+
+h1{
+  font-size: 3em;
+  text-align: center;
+}
+
+h2{
+  background: url(img/break.jpg) no-repeat bottom center;
+  font-family: "titre";
+  margin-bottom: 50px;
+  padding-bottom: 25px;
+  text-align: center;
+}
+
+h3{
+  color: #790000;
+  font-family: "titre";
+}
+
+/*
+  ----------
+  - Header -
+  ----------
+*/
+header{
+ /* background: url(img/logo.jpg) no-repeat top left;*/
+  height: 200px;
+  margin-top: -20px;
+}
+
+header h1 a{
+  color: #e6e6e6;
+  font-family: "titre";
+  position:relative;
+  top:100px;
+}
+
+header h1 a:hover{
+  color: #c1c1c1;
+}
+/*
+  --------------
+  - Navigation -
+  --------------
+*/
+nav{
+  text-align: right;
+  margin-top: -204px ;
+}
+
+nav li{
+  display: inline-block;
+}
+
+nav li a{
+  color: #737373;
+  border-top: 5px solid #b20f0f;
+  font-size: 0.9em;
+  padding-top: 15px;
+  transition: all 1s linear;
+}
+
+nav li a:hover,nav li a:focus {
+  padding-top: 5px;
+  border-top: 15px solid #b20f0f;
+}
+
+/*
+  -----------
+  - Section -
+  -----------
+*/
+section{
+  margin-top: 250px;
+}
+
+fieldset{
+  border: none;
+}
+
+legend{
+  color: #818181;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.btn{
+  display: block;
+
+}
+
+.btn a{
+  background: #dadada;
+  color: black;
+  margin-left: 15px;
+margin-bottom: 5px;
+  padding: 3px;
+}
+
+.btn a:hover{
+  color: white;
+}
+
+input[type="submit"]{
+  margin-left: 15px;
+}
+
+input[type="submit"]:hover{
+  color: white;
+  margin: 5px;
+}
+
+input, textarea{
+  display:block;
+  border: 1px solid #e6e6e6;
+}
+
+/*
+  ----------
+  - Footer -
+  ----------
+*/
+footer{
+  background: url(img/footer.jpg);
+  bottom: 0;
+  left: 0;
+  padding: 15px;
+  position: absolute;
+  right: 0;
+  text-align: center;
+}
+
+footer:before{
+  height: 100px;
+background: url(img/stripes.jpg) repeat-x top center;
+content: '';
+display: block;
+margin: 0;
+width:100%;}
+
+footer p{
+  color: white;
+  margin: 0 10%;
+}
+
+footer a{
+  color: #d00000;
+}
+
+footer a:hover{
+text-decoration: underline;
+}

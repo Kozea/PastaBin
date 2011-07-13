@@ -4,6 +4,7 @@
 
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <link rel="stylesheet" type="text/css" title="Pastabin" href="{{ url_for('static', filename='style.css') }}" media="screen" />
     <title>{{ page.title }} - {{ page.appname }}</title>
   </head>
 
@@ -21,6 +22,16 @@
             <li><a href="{{ item.url }}" class="{{ item.name }}">{{ item.title }}</a></li>
           {%- endif %}
         {%- endfor %}
+ {% if not session.login %}
+          <li class="connect"><a href="{{ url_for("connect") }}">Login</a></li>
+          <li class="register"><a href="{{ url_for("register") }}">Register</a></li>
+        </ul>
+      {% else %}
+        <ul>
+          <li class="infos">Connected as <strong>{{ session.login }}</strong></li>
+          <li class="manage"><a href="{{ url_for("account") }}">Manage my account</a></li>
+          <li class="disconnect"><a href="{{ url_for("disconnect") }}">Logout</a></li>
+       {% endif %}
       </ul>
     </nav>
 
@@ -43,18 +54,7 @@
     </section>
 
     <aside id="userinfos">
-      {% if not session.login %}
-        <ul>
-          <li class="connect"><a href="{{ url_for("connect") }}">Login</a></li>
-          <li class="register"><a href="{{ url_for("register") }}">Register</a></li>
-        </ul>
-      {% else %}
-        <ul>
-          <li class="infos">Connected as <strong>{{ session.login }}</strong></li>
-          <li class="manage"><a href="{{ url_for("account") }}">Manage my account</a></li>
-          <li class="disconnect"><a href="{{ url_for("disconnect") }}">Logout</a></li>
-        </ul>
-      {% endif %}
+     
     </aside>
 
     <footer>

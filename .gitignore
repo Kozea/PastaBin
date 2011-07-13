@@ -2,3 +2,5 @@
 *~
 *.db
 *.json
+env
+Pastabin.egg-info
