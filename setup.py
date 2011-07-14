@@ -37,12 +37,14 @@
 ###########################################################################
 
 
+"""
+PastaBin Installer.
+"""
+
 from setuptools import setup, find_packages
 
 
 setup(
-    name="Pastabin",
+    name="PastaBin",
     packages=find_packages(),
-    install_requires=["Flask", "Multicorn", "Pygments"],
-    )
-
+    install_requires=["Flask", "Multicorn", "Pygments"])
