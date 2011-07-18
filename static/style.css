@@ -96,8 +96,8 @@ header h1 a:hover{
   --------------
 */
 nav{
-  text-align: right;
   margin: -195px 10% 0 10%;
+  text-align: right;
 }
 
 nav li{
@@ -193,20 +193,18 @@ li.error{
 */
 footer{
   background: url(img/footer.jpg);
+  bottom:-6em;
   height: 6em;
-left:0;
-right: 0;
-bottom:-6em;
-
+  left:0;
+  position: absolute;
+  right: 0;
   text-align: center;
-position: absolute;
 }
-
 
 footer p{
   color: white;
+  line-height: 2em;
   margin: 0 10%;
-  padding: 5px;
 }
 
 footer a{
