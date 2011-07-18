@@ -20,11 +20,10 @@ html{
 }
 
 body{
-background: url(img/logo.png) no-repeat top left;
+  background: url(img/logo.png) no-repeat top left;
   font-family: "Courier New", Courier, monospace;
   font-size: 0.9em;
   margin: 0;
-
 }
 
 /*
@@ -51,6 +50,11 @@ h2{
   margin-bottom: 50px;
   padding-bottom: 25px;
   text-align: center;
+  transition: color 0.4s linear;
+}
+
+h2:hover{
+  color: #cc0000;
 }
 
 h3{
@@ -64,7 +68,6 @@ h3{
   ----------
 */
 header{
- /* background: url(img/logo.jpg) no-repeat top left;*/
   height: 200px;
   margin-top: -20px;
 }
@@ -74,11 +77,13 @@ header h1 a{
   font-family: "titre";
   position:relative;
   top:100px;
+  transition: color 0.2s linear;
 }
 
 header h1 a:hover{
   color: #c1c1c1;
 }
+
 /*
   --------------
   - Navigation -
@@ -98,12 +103,13 @@ nav li a{
   border-top: 5px solid #b20f0f;
   font-size: 0.9em;
   padding-top: 15px;
-  transition: all 1s linear;
+  transition: all 0.4s linear;
 }
 
 nav li a:hover,nav li a:focus {
-  padding-top: 5px;
-  border-top: 15px solid #b20f0f;
+  border-top: 20px solid #b20f0f;
+  color: #cc0000;
+  padding-top: 0px;
 }
 
 /*
@@ -120,22 +126,24 @@ fieldset{
 }
 
 legend{
-  color: #818181;
-  text-align: center;
+  color: #ae0000;
   text-transform: uppercase;
 }
 
 .btn{
   display: block;
-
+  margin-left: 8px;
 }
 
 .btn a{
   background: #dadada;
   color: black;
-  margin-left: 15px;
-margin-bottom: 5px;
+  display: block;
+  font-size: 0.8em;
+  margin: 5px;
   padding: 3px;
+  text-align: center;
+  width: 170px;
 }
 
 .btn a:hover{
@@ -143,7 +151,8 @@ margin-bottom: 5px;
 }
 
 input[type="submit"]{
-  margin-left: 15px;
+  margin-left: 5px;
+  width: 177px;
 }
 
 input[type="submit"]:hover{
@@ -173,11 +182,12 @@ footer{
 
 footer:before{
   height: 100px;
-background: url(img/stripes.jpg) repeat-x top center;
-content: '';
-display: block;
-margin: 0;
-width:100%;}
+  background: url(img/stripes.jpg) repeat-x top center;
+  content: '';
+  display: block;
+  margin: 0;
+  width:100%;
+}
 
 footer p{
   color: white;
@@ -186,8 +196,9 @@ footer p{
 
 footer a{
   color: #d00000;
+  transition: color 0.4s linear;
 }
 
 footer a:hover{
-text-decoration: underline;
+  color: #ece000;
 }
