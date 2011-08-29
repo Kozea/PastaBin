@@ -1,0 +1,14 @@
+html {
+	background-color: #f1f1f1;
+}
+
+body {
+	background: white;
+	color: black;
+	font-family: sans-serif;
+	width: 750px;
+	margin: 20px auto;
+	box-shadow: 0 0 4px gray;
+	border-radius: 5px;
+	padding: 10px;
+}

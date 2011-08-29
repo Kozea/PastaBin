@@ -1,0 +1,26 @@
+name: PastaBin
+description: A pastebin with a lot of taste
+license: AGPLv3+
+public: true
+url: http://www.pastabin.org/
+
+menu:
+  - Download:
+      link: /download/
+
+vcs (git):
+  url: git://github.com/Kozea/PastaBin.git
+  path: /var/db/git/pastabin.git
+
+code browser (github):
+  project name: Kozea/PastaBin
+
+bug tracker (redmine):
+  base url: http://redmine.kozea.fr/
+  project name: pastabin
+
+# room (jabber):
+#   address: radicale@room.jabber.kozea.fr
+
+# package repository (pypi):
+#   project name: radicale
