@@ -1,14 +1,222 @@
-html {
-	background-color: #f1f1f1;
+/*
+  -------------
+  - Font Face -
+  -------------
+*/
+@font-face {
+  font-family: "titre";
+  src: url(OCRAStd.otf);
 }
 
-body {
-	background: white;
-	color: black;
-	font-family: sans-serif;
-	width: 750px;
-	margin: 20px auto;
-	box-shadow: 0 0 4px gray;
-	border-radius: 5px;
-	padding: 10px;
+/*
+  ---------------
+  - HTML / Body -
+  ---------------
+*/
+body{
+  background: url(img/logo.png) no-repeat top left;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9em;
+  margin: -6em 0 0 0;
+  min-height: 100%;
+  padding: 0 0 0 0;
+  position: absolute;
+  width: 100%;
+}
+
+body:after{
+  background: url(img/stripes.jpg) repeat-x bottom center;
+  bottom: 0;
+  content:'';
+  display:block;
+  height: 100px;
+  position: absolute;
+  width: 100%;
+  z-index: -1;
+}
+
+/*
+  ----------
+  - Common -
+  ----------
+*/
+a{
+  color: #a40000;
+  text-decoration: none;
+  transition: color 0.4s linear;
+}
+
+a:hover, a:focus{
+  color: #cf0000;
+}
+
+h1{
+  font-size: 3em;
+  text-align: center;
+}
+
+h2{
+  background: url(img/break.png) no-repeat bottom center;
+  font-family: "titre";
+  margin-bottom: 50px;
+  padding-bottom: 25px;
+  text-align: center;
+  transition: color 0.4s linear;
+}
+
+h2:hover{
+  color: #cc0000;
+}
+
+h3{
+  color: #790000;
+  font-family: "titre";
+}
+
+/*
+  ----------
+  - Header -
+  ----------
+*/
+header{
+  border-top: 1em solid #790000; 
+  height: 200px;
+  margin-top: 6em;
+}
+
+header h1 a{
+  color: #e6e6e6;
+  font-family: "titre";
+  position:relative;
+  top:100px;
+}
+
+header h1 a:hover{
+  color: #c1c1c1;
+}
+
+/*
+  --------------
+  - Navigation -
+  --------------
+*/
+nav{
+  margin: -195px 10% 0 10%;
+  text-align: right;
+}
+
+nav li{
+  display: inline-block;
+}
+
+nav li a{
+  color: #737373;
+  border-top: 5px solid #b20f0f;
+  font-size: 0.9em;
+  padding-top: 15px;
+  transition: all 0.4s linear;
+}
+
+nav li a:hover,nav li a:focus {
+  border-top: 20px solid #b20f0f;
+  color: #cc0000;
+  padding-top: 0;
+}
+
+/*
+  ----------------
+  - Section/Aside-
+  ----------------
+*/
+section{
+  margin: 250px 10% 80px 10%;
+}
+
+section section {
+  margin: 40px 0;
+}
+
+form{
+  margin-left: 140px;
+}
+
+fieldset{
+  border: none;
+}
+
+legend{
+  color: #ae0000;
+  font-family: "titre";
+  text-transform: uppercase;
+}
+
+.btn{
+  display: block;
+  margin-left: 8px;
+}
+
+.btn a{
+  background: #dadada;
+  color: black;
+  display: block;
+  font-size: 0.8em;
+  margin: 5px;
+  padding: 3px;
+  text-align: center;
+  width: 170px;
+}
+
+.btn a:hover{
+  color: white;
+}
+
+input[type="submit"]{
+  margin-left: 5px;
+  width: 177px;
+}
+
+input[type="submit"]:hover{
+  color: white;
+  margin: 5px;
+  transition: color 0.4s linear;
+}
+
+input, textarea{
+  display:block;
+  border: 1px solid #e6e6e6;
+}
+
+li.error{
+  color: #ae0000;
+  font-family: "titre";
+  font-variant: small-caps;
+  position:absolute;
+  right:10%;
+}
+
+/*
+  ----------
+  - Footer -
+  ----------
+*/
+footer{
+  background: url(img/footer.jpg);
+  bottom:-6em;
+  height: 6em;
+  left:0;
+  position: absolute;
+  right: 0;
+  text-align: center;
+}
+
+footer li{
+  display: inline-block;
+}
+
+footer a{
+  color: #d00000;
+}
+
+footer a:hover{
+  color: #ece000;
 }

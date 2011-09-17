@@ -19,8 +19,6 @@ bug tracker (redmine):
   base url: http://redmine.kozea.fr/
   project name: pastabin
 
-# room (jabber):
-#   address: radicale@room.jabber.kozea.fr
-
-# package repository (pypi):
-#   project name: radicale
+continuous integration (jenkins):
+  base url: http://jenkins.kozea.org/
+  project name: PastaBin
