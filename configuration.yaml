@@ -8,6 +8,10 @@ menu:
   - Download:
       link: /download/
 
+project (git):
+  url: git://github.com/Kozea/PastaBin.git
+  path: pastebin
+
 vcs (git):
   url: git://github.com/Kozea/PastaBin.git
   path: /var/db/git/pastabin.git
